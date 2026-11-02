@@ -37,12 +37,12 @@ as respostas de todos para todos.
 > Sobre os seus dados: eu **não vou registrar seu nome nem seu número** junto das
 > respostas — quando eu passar pra planilha, você vira só um código tipo R01. As
 > respostas vão ser usadas só neste trabalho da faculdade, analisadas junto com as
-> dos outros, e apago tudo até [preencher: data]. Nada é publicado nem
+> dos outros, e apago tudo até 09/11. Nada é publicado nem
 > compartilhado.
 >
 > Pode pular qualquer pergunta. Se não quiser participar, só ignora, de boa. 🙂
 >
-> Qualquer dúvida é comigo: [preencher: nome] — [preencher: e-mail institucional]
+> Qualquer dúvida é comigo: Vinicius G. Vellosa — vgvellosa@uniara.edu.br
 >
 > **Se você responder, considero que você concordou em participar e que tem 18 anos
 > ou mais.**
