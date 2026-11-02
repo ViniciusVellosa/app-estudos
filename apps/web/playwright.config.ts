@@ -16,7 +16,14 @@ export default defineConfig({
     ? undefined
     : [
         {
-          command: "cd ../api && DATABASE_URL=sqlite:///./e2e.db CORS_ORIGINS='[\"http://localhost:4173\"]' uv run uvicorn app.main:app --port 8000",
+          // cwd e env em vez de `cd ../api && VAR=valor ...`: prefixo de
+          // variavel e sintaxe de shell POSIX e nao roda no Windows.
+          command: "uv run uvicorn app.main:app --port 8000",
+          cwd: "../api",
+          env: {
+            DATABASE_URL: "sqlite:///./e2e.db",
+            CORS_ORIGINS: '["http://localhost:4173"]',
+          },
           url: "http://localhost:8000/v1/health",
           reuseExistingServer: true,
         },
