@@ -46,8 +46,9 @@ $RECYCLE.BIN/
 # Claude Code: configuração local da máquina (as skills vão para o Git)
 .claude/settings.local.json
 
-# Dados de pesquisa com pessoas (LGPD): áudio, print de conversa e lista de
-# contatos nunca entram no Git. Ver docs/pesquisa/dados/README.md.
-docs/pesquisa/dados/*
-!docs/pesquisa/dados/*.md
-!docs/pesquisa/dados/*-anonimizado.csv
+# Dados de pesquisa com pessoas (LGPD): áudio, print de conversa, gravação de
+# sessão e lista de contatos nunca entram no Git. Vale para a pasta dados/ de
+# qualquer etapa. Ver docs/etapa-1-pesquisa/dados/README.md.
+docs/**/dados/*
+!docs/**/dados/*.md
+!docs/**/dados/*-anonimizado.csv

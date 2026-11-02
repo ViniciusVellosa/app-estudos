@@ -17,7 +17,7 @@ questionário da Etapa 1 dá perfil e distribuição, não entrevistas. O limite
 conhecido da técnica é **reforçar as suposições de quem escreveu**, e isso vale em
 dobro aqui, porque parte dos respondentes é o próprio grupo.
 
-Declare isso no relatório. O texto pronto está em `../pesquisa/plano-de-pesquisa.md` §7.
+Declare isso no relatório. O texto pronto está em `../etapa-1-pesquisa/plano-de-pesquisa.md` §7.
 
 ---
 
@@ -26,7 +26,7 @@ Declare isso no relatório. O texto pronto está em `../pesquisa/plano-de-pesqui
 > **Atenção, e isto é o ponto mais importante deste arquivo.** O questionário da
 > Etapa 1 **não coleta dado sobre deficiência**, por decisão de privacidade (canal
 > identificado, dado sensível pela LGPD art. 11 — ver
-> `../pesquisa/plano-de-pesquisa.md` §3). Logo, **esta persona não vem dos seus
+> `../etapa-1-pesquisa/plano-de-pesquisa.md` §3). Logo, **esta persona não vem dos seus
 > dados.** Ela é construída a partir de:
 >
 > - os critérios da **WCAG 2.2** e os requisitos RA01 a RA24 do projeto;

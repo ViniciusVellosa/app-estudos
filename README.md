@@ -69,7 +69,17 @@ cd apps/web && npx playwright install chromium && npx playwright test   # sobe A
 ```
 apps/api    FastAPI · validators/grounding.py (anti-erro) · providers/ (curated, llm)
 apps/web    React + Vite + TS · e2e/ (Playwright + axe)
-docs/adr    decisões de arquitetura
-docs/requisitos
+
+docs/README.md              índice da documentação e cadeia de rastreabilidade
+docs/etapa-1-pesquisa       pesquisa com usuários: plano, questionário, consentimento
+docs/etapa-2-personas-cenarios  personas, PACT, cenários, tarefas T1–T5
+docs/etapa-3-prototipo      o app é o protótipo; tokens validados, decisões de design
+docs/etapa-4-avaliacao      protocolo do teste, SUS, heurística, auditoria WCAG
+docs/requisitos             requisitos funcionais e não funcionais (RF, RNF)
+docs/adr                    decisões de arquitetura
+
 compose.yaml · .env.example · .github/workflows/ci.yml
 ```
+
+As quatro pastas `etapa-*` seguem o ciclo da disciplina de IHC
+(Entender → Desenhar → Avaliar). Comece por [docs/README.md](docs/README.md).
