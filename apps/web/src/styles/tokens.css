@@ -1,0 +1,63 @@
+/* Tokens de design. Todos os pares texto/fundo foram medidos com
+   lumen-ihc-acessibilidade/scripts/contrast_check.py (alvo: AAA 7:1 no texto,
+   3:1 em bordas e foco). Ao mudar uma cor, meça de novo. */
+
+:root {
+  --font-scale: 1;
+  --bg: #ffffff;
+  --surface: #f3f4f6;
+  --text: #1a1a1a;
+  --text-muted: #474747;
+  --primary: #0b4fb3;
+  --primary-text: #ffffff;
+  --border: #6b6b6b;
+  --focus: #0b4fb3;
+  --notice-bg: #fff4d6;
+  --notice-text: #3d2e00;
+  --danger: #a3141c;
+}
+
+:root[data-theme="escuro"] {
+  --bg: #121212;
+  --surface: #1f1f1f;
+  --text: #f2f2f2;
+  --text-muted: #c7c7c7;
+  --primary: #9cc2ff;
+  --primary-text: #0a0a0a;
+  --border: #9a9a9a;
+  --focus: #9cc2ff;
+  --notice-bg: #33290a;
+  --notice-text: #ffe8a3;
+  --danger: #ffb3b3;
+}
+
+/* Amarelo sobre preto: a mesma combinação dos teclados ampliados para baixa visão */
+:root[data-theme="alto-contraste"] {
+  --bg: #000000;
+  --surface: #000000;
+  --text: #ffffff;
+  --text-muted: #ffffff;
+  --primary: #ffff00;
+  --primary-text: #000000;
+  --border: #ffffff;
+  --focus: #ffff00;
+  --notice-bg: #000000;
+  --notice-text: #ffff00;
+  --danger: #ff8080;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root[data-theme="sistema"] {
+    --bg: #121212;
+    --surface: #1f1f1f;
+    --text: #f2f2f2;
+    --text-muted: #c7c7c7;
+    --primary: #9cc2ff;
+    --primary-text: #0a0a0a;
+    --border: #9a9a9a;
+    --focus: #9cc2ff;
+    --notice-bg: #33290a;
+    --notice-text: #ffe8a3;
+    --danger: #ffb3b3;
+  }
+}

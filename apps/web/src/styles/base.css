@@ -1,0 +1,236 @@
+@import "./tokens.css";
+
+/* Unidades relativas (rem) para respeitar o tamanho de fonte do sistema e a
+   preferência de ampliação do app (WCAG 1.4.4). */
+html {
+  font-size: calc(100% * var(--font-scale));
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  font-size: 1.125rem;
+  line-height: 1.6; /* WCAG 1.4.12: ao menos 1,5 */
+  /* Palavras longas ("congestionamento") com fonte ampliada estouravam a tela
+     de 320px; o teste e2e pegou. Quebrar e hifenizar evita rolagem lateral. */
+  overflow-wrap: break-word;
+  hyphens: auto;
+}
+
+ul,
+ol {
+  padding-left: 1.25em;
+}
+
+/* Coluna única e fluida: reflui a 320px de largura / 400% de zoom (WCAG 1.4.10) */
+main,
+.topo-conteudo {
+  max-width: 42rem; /* ~70 caracteres por linha */
+  margin: 0 auto;
+  padding: 0 1rem 4rem;
+}
+
+h1,
+h2,
+h3 {
+  line-height: 1.25;
+}
+
+p,
+li {
+  max-width: 70ch;
+}
+
+a {
+  color: var(--primary);
+}
+
+/* Foco sempre visível, 3px, contraste ≥ 3:1 (WCAG 2.4.7 e 2.4.13) */
+:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 3px;
+}
+
+/* Com cabeçalho fixo, o foco poderia ficar escondido (WCAG 2.4.11): o cabeçalho não é fixo. */
+.topo {
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+}
+
+.pular {
+  position: absolute;
+  left: -9999px;
+}
+.pular:focus {
+  position: static;
+  display: inline-block;
+  margin: 0.5rem;
+}
+
+button,
+.botao {
+  font: inherit;
+  min-height: 2.75rem; /* 44px: WCAG 2.5.5 (AAA); o mínimo AA é 24px */
+  min-width: 2.75rem;
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  border: 2px solid var(--primary);
+  background: var(--primary);
+  color: var(--primary-text);
+  cursor: pointer;
+}
+
+button.secundario {
+  background: transparent;
+  color: var(--primary);
+}
+
+button[aria-pressed="true"] {
+  outline: 2px solid var(--text);
+}
+
+button.perigo {
+  background: transparent;
+  color: var(--danger);
+  border-color: var(--danger);
+}
+
+input[type="text"],
+select {
+  font: inherit;
+  min-height: 2.75rem;
+  width: 100%;
+  padding: 0.5rem;
+  border: 2px solid var(--border); /* 3:1 com o fundo (WCAG 1.4.11) */
+  border-radius: 0.5rem;
+  background: var(--bg);
+  color: var(--text);
+}
+
+label {
+  display: block;
+  font-weight: 600;
+  margin: 1rem 0 0.25rem;
+}
+
+fieldset {
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+  margin: 1rem 0;
+}
+
+fieldset label {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  font-weight: 400;
+  margin: 0.5rem 0;
+}
+
+input[type="radio"],
+input[type="checkbox"] {
+  width: 1.5rem;
+  height: 1.5rem;
+}
+
+.dica {
+  color: var(--text-muted);
+  font-size: 1rem;
+}
+
+.aviso {
+  background: var(--notice-bg);
+  color: var(--notice-text);
+  border-left: 0.375rem solid currentColor;
+  padding: 0.75rem 1rem;
+  border-radius: 0.25rem;
+}
+
+.erro {
+  color: var(--danger);
+  font-weight: 600;
+}
+
+.passo {
+  border-top: 1px solid var(--border);
+  padding-top: 0.5rem;
+}
+
+.acoes {
+  display: flex;
+  flex-wrap: wrap; /* quebra em vez de rolar na horizontal */
+  gap: 0.75rem;
+  margin: 1rem 0;
+}
+
+table {
+  border-collapse: collapse;
+  width: 100%;
+}
+th,
+td {
+  border: 1px solid var(--border);
+  padding: 0.5rem;
+  text-align: left;
+  vertical-align: top;
+}
+
+/* Em telas estreitas a tabela vira lista, sem rolagem horizontal */
+@media (max-width: 30rem) {
+  table,
+  thead,
+  tbody,
+  tr,
+  th,
+  td {
+    display: block;
+  }
+  thead {
+    position: absolute;
+    left: -9999px;
+  }
+  td::before {
+    content: attr(data-rotulo) ": ";
+    font-weight: 600;
+  }
+}
+
+.visualmente-oculto {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation: none !important;
+    transition: none !important;
+    scroll-behavior: auto !important;
+  }
+}
+:root[data-reduced-motion="true"] * {
+  animation: none !important;
+  transition: none !important;
+}
+
+/* Modo de alto contraste do Windows: deixa o sistema escolher as cores */
+@media (forced-colors: active) {
+  button,
+  .botao {
+    border: 2px solid ButtonText;
+  }
+  :focus-visible {
+    outline-color: Highlight;
+  }
+}

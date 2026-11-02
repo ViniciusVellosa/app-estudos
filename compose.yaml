@@ -1,0 +1,62 @@
+# Sobe tudo:            docker compose up --build
+# Desenvolvimento:      docker compose watch   (recarrega a API ao salvar)
+# Parar (mantém dados): docker compose down
+# Versões verificadas em 29/10/2026.
+services:
+  db:
+    image: postgres:18-alpine
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-estudos}
+      POSTGRES_USER: ${POSTGRES_USER:-estudos}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?defina POSTGRES_PASSWORD no .env}
+    volumes:
+      # Postgres 18+: monte em /var/lib/postgresql (até o 17 era /var/lib/postgresql/data)
+      - pgdata:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    # sem "ports": o banco só é acessível pela API, dentro da rede do Compose
+
+  api:
+    build: ./apps/api
+    env_file: .env
+    environment:
+      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-estudos}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-estudos}
+      CORS_ORIGINS: '["http://localhost:5173"]'
+    depends_on:
+      db:
+        condition: service_healthy
+        restart: true
+    ports:
+      - "8000:8000"
+    extra_hosts:
+      # permite à API chamar um Ollama rodando no computador (LLM_BASE_URL=http://host.docker.internal:11434/v1);
+      # necessário no Linux, inofensivo no Windows/macOS
+      - "host.docker.internal:host-gateway"
+    develop:
+      watch:
+        - action: sync+restart
+          path: ./apps/api/app
+          target: /app/app
+        - action: sync+restart   # o conteúdo é lido quando a API inicia
+          path: ./apps/api/content
+          target: /app/content
+        - action: rebuild
+          path: ./apps/api/pyproject.toml
+        - action: rebuild
+          path: ./apps/api/uv.lock
+
+  web:
+    build:
+      context: ./apps/web
+      args:
+        VITE_API_URL: http://localhost:8000
+    depends_on:
+      - api
+    ports:
+      - "5173:80"
+
+volumes:
+  pgdata:

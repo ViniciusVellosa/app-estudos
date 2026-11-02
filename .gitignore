@@ -1,0 +1,47 @@
+# Segredos — nunca versionar. O modelo fica em .env.example.
+.env
+.env.local
+.env.*.local
+!.env.example
+
+# Banco local / SQLite dos testes
+*.db
+
+# Python
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+coverage.xml
+htmlcov/
+
+# Node / Vite / Playwright
+node_modules/
+dist/
+.vite/
+test-results/
+playwright-report/
+playwright/.cache/
+*.tsbuildinfo
+
+# Logs
+*.log
+npm-debug.log*
+
+# Editores
+.vscode/
+.idea/
+*.swp
+
+# Sistema operacional (OneDrive/Windows e macOS)
+desktop.ini
+Thumbs.db
+ehthumbs.db
+$RECYCLE.BIN/
+.DS_Store
+
+# Claude Code: configuração local da máquina (as skills vão para o Git)
+.claude/settings.local.json

@@ -1,0 +1,169 @@
+"""Gerador com modelo de linguagem (LLM).
+
+Dois backends:
+- "anthropic": API da Anthropic (Claude) com saída estruturada
+  (`client.messages.parse(output_format=ModeloPydantic)`; o SDK envia o schema
+  em `output_config.format` e valida a resposta).
+- "openai_compatible": qualquer servidor compatível com a API de chat da
+  OpenAI, inclusive modelos locais e gratuitos (Ollama ≥ 0.5 em
+  http://localhost:11434/v1), com `response_format` em JSON schema.
+
+Os SDKs são dependências opcionais (`uv sync --extra llm`). Confira na
+documentação do provedor, na data, o nome do modelo e os parâmetros.
+
+Mesmo com saída estruturada, o provedor garante só o FORMATO, não o
+conteúdo. Por isso a resposta passa sempre pelo Pydantic e pelos validadores
+anti-alucinação (app/validators/grounding.py).
+
+Segurança (OWASP Top 10 para aplicações com LLM, 2025):
+- LLM01 injeção de prompt: o interesse do aluno entra delimitado e escapado,
+  como dado, nunca como instrução;
+- LLM02 vazamento de dados: nenhum identificador do aluno vai para o provedor;
+- LLM05 tratamento de saída: a saída é validada antes de chegar ao aluno e o
+  front-end a exibe como texto, nunca como HTML;
+- LLM09 desinformação: texto-base revisado + validadores + revisão humana;
+- LLM10 consumo sem limite: max_tokens, timeout e cache de explicações.
+"""
+from __future__ import annotations
+
+import json
+from functools import lru_cache
+from pathlib import Path
+from xml.sax.saxutils import escape, quoteattr
+
+from pydantic import BaseModel, ConfigDict, ValidationError
+
+from app.config import Settings, get_settings
+from app.providers.base import ExplanationRequestData, GenerationError
+from app.schemas import ExplanationPayload, Refusal
+
+PROMPT_PATH = Path(__file__).resolve().parent.parent / "prompts" / "explicacao_sistema.md"
+
+
+class GenerationResult(BaseModel):
+    """Envelope único: explicação nos seis passos OU recusa."""
+
+    model_config = ConfigDict(extra="forbid")
+    resultado: ExplanationPayload | Refusal
+
+
+@lru_cache
+def system_prompt() -> str:
+    return PROMPT_PATH.read_text(encoding="utf-8")
+
+
+def output_schema() -> dict:
+    return GenerationResult.model_json_schema()
+
+
+def user_message(req: ExplanationRequestData) -> str:
+    """Monta a mensagem com as entradas delimitadas e escapadas.
+
+    O rótulo do interesse vem do aluno: é escapado para não fechar as tags e
+    não carrega nenhum identificador pessoal.
+    """
+    # O texto-base vem primeiro: é igual para todos os alunos e pode ser
+    # reaproveitado pelo cache de prompt do provedor; o que varia vem depois.
+    parts = [
+        f"<texto_base>\n{escape(req.concept.base_text)}\n</texto_base>",
+        f"<conceito>{escape(req.concept.title)}</conceito>",
+        f"<nivel>{escape(req.level)}</nivel>",
+        f"<interesse rotulo={quoteattr(req.interest_label)} profundidade=\"{req.depth}\"/>",
+    ]
+    if req.feedback:
+        parts.append(f"<correcoes>{escape(req.feedback)}</correcoes>")
+    return "\n".join(parts)
+
+
+def parse_result(data: dict) -> ExplanationPayload | Refusal:
+    try:
+        return GenerationResult.model_validate(data).resultado
+    except ValidationError as exc:
+        raise GenerationError(f"resposta fora do formato: {exc.error_count()} erro(s)") from exc
+
+
+class AnthropicGenerator:
+    name = "llm:anthropic"
+
+    def __init__(self, settings: Settings):
+        try:
+            import anthropic
+        except ImportError as exc:  # pragma: no cover
+            raise GenerationError("instale o extra 'llm' (pacote anthropic)") from exc
+        if not settings.llm_api_key or not settings.llm_model:
+            raise GenerationError("defina LLM_API_KEY e LLM_MODEL")
+        self.client = anthropic.Anthropic(
+            api_key=settings.llm_api_key, timeout=settings.llm_timeout_s
+        )
+        self.settings = settings
+
+    def generate(self, req: ExplanationRequestData) -> ExplanationPayload | Refusal:
+        try:
+            response = self.client.messages.parse(
+                model=self.settings.llm_model,
+                max_tokens=self.settings.llm_max_output_tokens,
+                system=system_prompt(),
+                messages=[{"role": "user", "content": user_message(req)}],
+                output_format=GenerationResult,
+            )
+        except ValidationError as exc:
+            raise GenerationError("resposta fora do formato") from exc
+        except Exception as exc:  # rede, limite de uso, tempo esgotado
+            raise GenerationError(f"falha ao chamar o provedor: {type(exc).__name__}") from exc
+        if response.stop_reason == "max_tokens":
+            raise GenerationError("resposta cortada por max_tokens; aumente LLM_MAX_OUTPUT_TOKENS")
+        if response.stop_reason == "refusal" or response.parsed_output is None:
+            raise GenerationError("o modelo recusou ou não devolveu a saída estruturada")
+        return response.parsed_output.resultado
+
+
+class OpenAICompatibleGenerator:
+    name = "llm:openai_compatible"
+
+    def __init__(self, settings: Settings):
+        try:
+            import openai
+        except ImportError as exc:  # pragma: no cover
+            raise GenerationError("instale o extra 'llm' (pacote openai)") from exc
+        if not settings.llm_model:
+            raise GenerationError("defina LLM_MODEL")
+        self.client = openai.OpenAI(
+            api_key=settings.llm_api_key or "nao-usado-localmente",
+            base_url=settings.llm_base_url or None,
+            timeout=settings.llm_timeout_s,
+        )
+        self.settings = settings
+
+    def generate(self, req: ExplanationRequestData) -> ExplanationPayload | Refusal:
+        try:
+            resp = self.client.chat.completions.create(
+                model=self.settings.llm_model,
+                max_tokens=self.settings.llm_max_output_tokens,
+                temperature=0,
+                response_format={
+                    "type": "json_schema",
+                    "json_schema": {"name": "explicacao", "schema": output_schema()},
+                },
+                messages=[
+                    {"role": "system", "content": system_prompt()},
+                    {"role": "user", "content": user_message(req)},
+                ],
+            )
+            choice = resp.choices[0]
+            if choice.finish_reason == "length":
+                raise GenerationError("resposta cortada por max_tokens")
+            data = json.loads(choice.message.content or "")
+        except GenerationError:
+            raise
+        except json.JSONDecodeError as exc:
+            raise GenerationError("o modelo não devolveu JSON válido") from exc
+        except Exception as exc:
+            raise GenerationError(f"falha ao chamar o provedor: {type(exc).__name__}") from exc
+        return parse_result(data)
+
+
+def build_llm_generator(settings: Settings | None = None):
+    settings = settings or get_settings()
+    if settings.llm_backend == "anthropic":
+        return AnthropicGenerator(settings)
+    return OpenAICompatibleGenerator(settings)

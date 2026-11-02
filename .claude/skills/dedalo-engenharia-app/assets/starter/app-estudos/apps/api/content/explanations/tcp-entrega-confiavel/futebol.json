@@ -1,0 +1,26 @@
+{
+  "_meta": {
+    "interest_label": "futebol",
+    "level": "iniciante",
+    "status": "approved",
+    "reviewed_by": "PREENCHER: quem revisou",
+    "note": "Explicação escrita à mão (Mágico de Oz). Use este formato para preparar as explicações do teste de usabilidade."
+  },
+  "conceito": "O TCP garante que os dados cheguem completos e em ordem, mesmo que a rede perca pacotes. Cada segmento leva um número de sequência, o receptor confirma o que recebeu e o remetente pode ter vários segmentos em trânsito até o limite da janela, retransmitindo o que não for confirmado.",
+  "cena": "No treino, o técnico chuta bolas numeradas para o atacante, uma atrás da outra, sem esperar cada uma voltar. Pode haver até cinco bolas no ar. A cada bola que chega, o atacante grita o número da próxima que espera. Se o grito por uma bola não vem a tempo, o técnico chuta aquela bola de novo.",
+  "mapeamento": [
+    {"universo": "bolas numeradas", "tecnico": "segmentos com número de sequência", "trecho_base": "Cada segmento enviado carrega um número de sequência"},
+    {"universo": "atacante grita o número da próxima bola", "tecnico": "confirmação (ACK)", "trecho_base": "O receptor devolve uma confirmação (ACK) informando o próximo número de sequência que espera receber"},
+    {"universo": "até cinco bolas no ar", "tecnico": "janela", "trecho_base": "Ele pode ter vários segmentos em trânsito ao mesmo tempo, até o limite da janela"},
+    {"universo": "técnico chuta a mesma bola de novo", "tecnico": "retransmissão", "trecho_base": "o remetente faz a retransmissão desse segmento"}
+  ],
+  "onde_falha": [
+    "No treino o número de bolas no ar é fixo; no TCP o tamanho da janela muda o tempo todo pelo controle de fluxo e de congestionamento.",
+    "Uma bola é um objeto inteiro; o número de sequência do TCP conta bytes, não segmentos."
+  ],
+  "reformulacao_tecnica": "O remetente TCP numera os dados com números de sequência e envia vários segmentos sem aguardar a confirmação de cada um, até o limite da janela. O receptor responde com ACK indicando o próximo número de sequência esperado. Segmentos não confirmados dentro do tempo limite passam por retransmissão.",
+  "pergunta_transferencia": {
+    "pergunta": "Uma empresa envia um arquivo grande por um link de satélite, com atraso de ida e volta de 600 ms. Por que um protocolo que esperasse a confirmação de cada segmento antes de enviar o próximo seria lento nesse link, e como a janela do TCP resolve isso?",
+    "resposta_esperada": "Esperando cada confirmação, o link fica ocioso durante quase todo o atraso de ida e volta. Com a janela, vários segmentos ficam em trânsito ao mesmo tempo, ocupando o link enquanto as confirmações não chegam."
+  }
+}

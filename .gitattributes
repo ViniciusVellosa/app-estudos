@@ -1,0 +1,13 @@
+# O repositorio guarda tudo em LF. O codigo roda em contêiner Linux, e
+# arquivo com CRLF quebra script/entrypoint dentro da imagem.
+* text=auto eol=lf
+
+# Arquivos de lock: tratar como texto, mas nao mostrar no diff por padrao.
+apps/api/uv.lock linguist-generated=true
+apps/web/package-lock.json linguist-generated=true
+
+# Binarios
+*.png binary
+*.jpg binary
+*.pdf binary
+*.ico binary
