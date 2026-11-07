@@ -16,9 +16,9 @@ Requisitos de acessibilidade e personalização vêm do Lumen (códigos RA e DP)
 | RF06 | Como aluno com baixa visão, quero aumentar o texto e usar alto contraste no app | Must | Achado 5 (item 13: 4 de 5 ajustam a leitura) → Ana [da literatura], Rafael · Cenário 1 | e2e `texto ampliado...` |
 | RF07 | Como aluno, quero ver e apagar meus dados | Must | LGPD art. 18 → todas as personas | `test_delete_me_erases_everything` |
 | RF08 | Como aluno que prefere linguagem técnica, quero definir a explicação sem analogia como padrão | Won't (nesta versão) | Achado 3 (R01: item 9 = 1; item 11 = 5) → Caio · Cenário 3. Substituído pela decisão D2: o app sempre começa pela analogia; decisão da equipe: Caio é atendido pelo botão de alternar do RF04. Observar no teste de usabilidade se o perfil cético aceita o clique extra | — |
-| RF09 | Como aluno, quero trocar de universo sem sair da explicação, para comparar analogias ou corrigir uma escolha ruim | Must | Decisão D4 · Achado 4 (universos variados) → Rafael · divergência 3 da seção 6 dos Cenários | a criar (Etapa 3) |
+| RF09 | Como aluno, quero trocar de universo sem sair da explicação, para comparar analogias ou corrigir uma escolha ruim | Must | Decisão D4 · Achado 4 (universos variados) → Rafael · divergência 3 da seção 6 dos Cenários · DD04 | `test_api.py::test_troca_de_universo_guarda_uma_explicacao_por_interesse` + e2e |
 | RF10 | Como aluno, quero conversar com o app numa interface de chat, recebendo a explicação em mensagens curtas, uma etapa por vez | Must | Decisão D3 · PACT conclusão 1 (blocos curtos e retomáveis) · Achado 6 (item 14: cansaço com texto longo, 4 de 5) → Ana, Rafael · divergência 1 da seção 6 dos Cenários | a criar (Etapa 3) |
-| RF11 | Como aluno, quero digitar perguntas livremente no chat e receber resposta somente dentro do conceito que estou estudando | Must | Decisão D5 · RNF04 (correção do conteúdo) · Achado 4 (item 12: 3 de 5 perderiam a confiança diante de um erro) → todas as personas | a criar (Etapa 3) |
+| RF11 | Como aluno, quero digitar perguntas livremente no chat e receber resposta somente dentro do conceito que estou estudando | Must | Decisão D5 · RNF04 (correção do conteúdo) · Achado 4 (item 12: 3 de 5 perderiam a confiança diante de um erro) → todas as personas · DD05, DD06 | `test_questions.py` (20 testes) + e2e |
 
 ### Exemplo de critérios de aceite (RF03)
 ```gherkin
@@ -41,7 +41,7 @@ Cenário: explicação reprovada na verificação
 | RNF01 | Capacidade de interação (inclusividade) | WCAG 2.2 AA; sem rolagem lateral a 320px com texto 2x | axe + e2e + checklist manual do Lumen |
 | RNF02 | Segurança | Chave da IA só no back-end; banco sem porta exposta; sessão por token com hash | revisão de código |
 | RNF03 | Confiabilidade | Falha ou recusa da IA → explicação padrão | `test_llm_*` |
-| RNF04 | Correção do conteúdo | Nenhuma resposta é exibida sem passar pela autoverificação da IA (D6) e pelos validadores automáticos; reprovada → nova tentativa ou explicação padrão | validadores + testes da autoverificação + taxa de erro medida no teste de usabilidade |
+| RNF04 | Correção do conteúdo | Nenhuma resposta é exibida sem passar pela autoverificação da IA (D6) e pelos validadores automáticos; reprovada → nova tentativa ou explicação padrão | `test_grounding.py` + `test_verification.py` (12 testes, incluindo o contrato de que a checagem não vê o rascunho) + taxa de erro medida no teste de usabilidade |
 | RNF05 | Privacidade (LGPD) | Minimização, consentimento, exportação e exclusão | testes de API |
 | RNF06 | Flexibilidade | Sobe com `docker compose up`; troca de provedor de IA por variável | CI |
 | RNF07 | Capacidade de interação (adaptabilidade) | Aplicação web responsiva: a mesma interface funciona no celular (a partir de 320px) e no computador, sem app nativo | e2e em viewport de celular e de desktop |

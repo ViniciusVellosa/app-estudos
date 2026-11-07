@@ -136,6 +136,28 @@ def to_out(row: Explanation, notice: str | None = None) -> ExplanationOut:
     )
 
 
+def universe_terms_for(db: Session, concept_slug: str, interest_label: str) -> list[str]:
+    """Termos da analogia que o aluno está lendo, para o porteiro do RF11.
+
+    Sem isso, perguntar "e se o zagueiro errar o passe?" seria recusado como
+    fora do conceito — e a cena do zagueiro foi o próprio app que ofereceu.
+    """
+    label = slugify(interest_label)
+    row = db.scalar(
+        select(Explanation)
+        .where(
+            Explanation.concept_slug == concept_slug,
+            Explanation.interest_label == label,
+            Explanation.status.in_(SERVED),
+        )
+        .order_by(Explanation.id.desc())
+    )
+    termos = [interest_label]
+    if row:
+        termos += [linha.get("universo", "") for linha in row.payload.get("mapeamento", [])]
+    return [t for t in termos if t]
+
+
 def generate_validated(
     generator: ExplanationGenerator,
     data: ExplanationRequestData,

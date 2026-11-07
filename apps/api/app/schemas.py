@@ -103,6 +103,27 @@ class ExplanationOut(BaseModel):
     created_at: datetime | None = None
 
 
+class QuestionIn(BaseModel):
+    """Pergunta livre do aluno dentro de um conceito (RF11).
+
+    O texto NÃO é gravado em lugar nenhum: é campo aberto, e campo aberto é
+    onde aparece dado pessoal sem querer (LGPD, art. 6º, III).
+    """
+
+    model_config = ConfigDict(extra="forbid")
+    pergunta: str = Field(min_length=3, max_length=300)
+    # Quando informado, os termos da analogia que o aluno está lendo também
+    # contam como "dentro do conceito".
+    interest_id: int | None = None
+
+
+class QuestionOut(BaseModel):
+    status: Literal["respondida", "fora_do_conceito", "sem_base"]
+    resposta: str
+    trechos: list[str] = Field(default_factory=list)
+    concept_title: str
+
+
 class FeedbackIn(BaseModel):
     kind: Literal["util", "errada", "confusa"]
     comment: str | None = Field(default=None, max_length=500)

@@ -142,3 +142,81 @@ def test_llm_valid_draft_is_served_after_verification(client):
     assert out.personalized is True
     assert out.status == "verified"
     assert out.notice == NOTICE_AI_VERIFIED  # o aluno sabe que não houve professor
+
+
+# --------------------------------------------------------------- RF09
+
+
+def test_troca_de_universo_guarda_uma_explicacao_por_interesse(client):
+    """RF09: trocar de universo e voltar, sem perder nem refazer nada.
+
+    A explicação é indexada por conceito + interesse + nível, então cada
+    universo tem a sua. Voltar ao anterior é leitura do cache: nenhuma
+    chamada nova de IA, e o texto é exatamente o mesmo de antes.
+    """
+    from app.content import load_curated
+
+    concept = load_concepts()[SLUG]
+    outra = load_curated(SLUG, "futebol").model_copy(
+        update={"cena": "No tabuleiro, várias peças avançam antes de o adversário responder."}
+    )
+    gen = FakeGenerator([outra])
+
+    with SessionLocal() as db:
+        futebol = get_explanation(db, concept, "futebol", 2, "iniciante", gen)  # curada
+        xadrez = get_explanation(db, concept, "xadrez", 2, "iniciante", gen)  # gerada
+
+    assert gen.calls == 1, "o universo curado não deve gastar IA"
+    assert futebol.interest_label == "futebol"
+    assert xadrez.interest_label == "xadrez"
+    assert futebol.payload != xadrez.payload
+    assert futebol.concept_slug == xadrez.concept_slug  # o conceito não muda
+
+    with SessionLocal() as db:
+        de_volta = get_explanation(db, concept, "futebol", 2, "iniciante", gen)
+    assert gen.calls == 1, "voltar ao universo anterior não regenera"
+    assert de_volta.payload == futebol.payload
+
+
+def test_endpoint_aceita_trocar_de_interesse_no_mesmo_conceito(client, auth):
+    """A troca pela API é o mesmo POST com outro interest_id."""
+    primeiro = client.post(
+        "/v1/me/interests", json={"label": "futebol", "depth": 2}, headers=auth
+    ).json()
+    segundo = client.post(
+        "/v1/me/interests", json={"label": "One Piece", "depth": 3}, headers=auth
+    ).json()
+
+    a = client.post(
+        "/v1/explanations",
+        json={"concept_slug": SLUG, "interest_id": primeiro["id"]},
+        headers=auth,
+    )
+    b = client.post(
+        "/v1/explanations",
+        json={"concept_slug": SLUG, "interest_id": segundo["id"]},
+        headers=auth,
+    )
+    assert a.status_code == 200 and b.status_code == 200
+    assert a.json()["concept_slug"] == b.json()["concept_slug"] == SLUG
+    # sem IA e sem explicação curada para "One Piece", o app mostra a padrão
+    # em vez de inventar: é o comportamento do modo Mágico de Oz.
+    assert a.json()["personalized"] is True
+    assert b.json()["personalized"] is False
+    assert b.json()["notice"]
+
+
+def test_interesse_de_outro_usuario_nao_serve_para_explicar(client, auth):
+    outro = client.post("/v1/session").json()["token"]
+    cabecalho = {"Authorization": f"Bearer {outro}"}
+    client.post("/v1/consent", json={"version": "2026-1", "accepted": True}, headers=cabecalho)
+    alheio = client.post(
+        "/v1/me/interests", json={"label": "futebol", "depth": 2}, headers=cabecalho
+    ).json()
+
+    r = client.post(
+        "/v1/explanations",
+        json={"concept_slug": SLUG, "interest_id": alheio["id"]},
+        headers=auth,
+    )
+    assert r.status_code == 404
