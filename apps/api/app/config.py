@@ -11,7 +11,12 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
-    model_config = SettingsConfigDict(env_file=".env", extra="ignore")
+    # Dois caminhos porque o .env do projeto fica na raiz do repositório (é o
+    # que o Compose usa), mas a API costuma ser rodada de dentro de apps/api.
+    # Sem o primeiro, `uv run fastapi dev` e `python -m app.smoke` ignorariam
+    # a configuração em silêncio e cairiam nos padrões. O último vence, então
+    # um .env dentro de apps/api sobrepõe o da raiz, se alguém quiser isso.
+    model_config = SettingsConfigDict(env_file=("../../.env", ".env"), extra="ignore")
 
     database_url: str = "sqlite:///./dev.db"
     content_dir: str = "content"
