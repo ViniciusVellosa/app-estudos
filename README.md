@@ -44,23 +44,39 @@ cd apps/web && npx playwright install chromium && npx playwright test   # sobe A
 ```
 
 ## Ligar a IA
-1. No `.env`: `EXPLANATION_PROVIDER=llm`, `LLM_BACKEND`, `LLM_MODEL`, `LLM_API_KEY`.
-   - Sem orçamento? Instale o [Ollama](https://ollama.com), baixe um modelo e use
-     `LLM_BACKEND=openai_compatible` com `LLM_BASE_URL=http://host.docker.internal:11434/v1`
-     (ou `http://localhost:11434/v1` fora do Docker).
-2. Explicações geradas passam pela **autoverificação** antes de aparecer
+1. No `.env`: `EXPLANATION_PROVIDER=llm` e os quatro valores do provedor.
+   **O `.env` está fora do Git; a chave nunca entra no repositório nem em
+   variáveis `VITE_`, que vão embutidas no JavaScript.**
+
+   | Provedor | `LLM_BACKEND` | `LLM_BASE_URL` | `LLM_MODEL` |
+   |---|---|---|---|
+   | **Gemini** | `openai_compatible` | `https://generativelanguage.googleapis.com/v1beta/openai/` | `gemini-3.8-flash` |
+   | Anthropic | `anthropic` | *(vazio)* | o nome atual na documentação |
+   | Ollama local, sem custo | `openai_compatible` | `http://host.docker.internal:11434/v1` (no Docker) | o modelo que você baixou |
+
+   O endereço do Gemini vem da página de compatibilidade com a OpenAI do Google,
+   conferida em 07/11/2026. Nomes de modelo mudam: confirme antes de fixar.
+   A chave do Gemini se gera em <https://aistudio.google.com/apikey>.
+
+2. Confira a configuração com uma chamada de verdade, antes de abrir o navegador:
+   ```bash
+   cd apps/api && uv run python -m app.smoke
+   ```
+   Ele gera uma explicação, roda a autoverificação e os validadores, e diz onde
+   parou. Não imprime a chave.
+3. Explicações geradas passam pela **autoverificação** antes de aparecer
    ([ADR 0003](docs/adr/0003-autoverificacao-da-ia.md)): o modelo escreve
    perguntas de checagem sobre o próprio rascunho, responde cada uma numa
    chamada separada **sem ver o rascunho** e só então dá o veredito.
    Reprovada duas vezes, o aluno vê a explicação padrão com um aviso.
-3. Para inspecionar o que foi gerado e tratar o que alguém marcou como
+4. Para inspecionar o que foi gerado e tratar o que alguém marcou como
    "está errada" (RF05):
    ```bash
    docker compose exec api python -m app.review list
    docker compose exec api python -m app.review show 3
    docker compose exec api python -m app.review reject 3
    ```
-4. **Para o teste de usabilidade, use `EXPLANATION_PROVIDER=curated`.** O que
+5. **Para o teste de usabilidade, use `EXPLANATION_PROVIDER=curated`.** O que
    se avalia na Etapa 4 é a interface, não o modelo, e assim as sessões não
    dependem de rede nem de chave.
 

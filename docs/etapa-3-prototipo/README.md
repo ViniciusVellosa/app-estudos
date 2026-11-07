@@ -27,10 +27,19 @@ docker compose up --wait
 A paleta está em `apps/web/src/styles/paleta-contraste.json` e os tokens em
 `apps/web/src/styles/tokens.css`.
 
-**Verificado em 02/11/2026:** os **22 pares de cor passam** `1.4.3 Contraste
+A paleta é em **tons de azul** (decisão DD24), com duas exceções deliberadas:
+o vermelho de erro, porque cor de alerta é convenção e não estética, e o tema de
+alto contraste, que continua **amarelo sobre preto** — é a combinação dos teclados
+e lupas eletrônicas para baixa visão, e a persona Ana é a razão de o tema existir.
+
+**Verificado em 07/11/2026:** os **34 pares de cor passam** `1.4.3 Contraste
 mínimo (AA)` **e** `1.4.6 Contraste melhorado (AAA, 7:1)` nos três temas. O menor
-valor foi 5,33:1, numa borda, onde o critério aplicável é `1.4.11` e exige 3:1.
-Isso cumpre a meta com estrela do requisito RA01.
+valor foi 5,00:1, numa borda sobre a superfície, onde o critério aplicável é
+`1.4.11` e exige 3:1. Isso cumpre a meta com estrela do requisito RA01.
+
+Uma cor foi **descartada por medição**: uma borda clara, para separar blocos de
+forma discreta, deu 1,38:1 e não alcançava os 3:1 de `1.4.11`. Em vez de abrir
+exceção, a separação passou a vir de preenchimento (`--surface`), não de linha.
 
 Reproduzir o resultado:
 

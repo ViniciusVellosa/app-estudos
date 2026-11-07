@@ -111,6 +111,24 @@ se está, e é o que a persona Caio usa para pular direto ao passo 5.
 
 ---
 
+## 4-A. Cor
+
+| ID | Decisão | Origem | Critério |
+|---|---|---|---|
+| **DD24** | A identidade visual é uma **paleta em tons de azul**: fundos, superfícies, texto e ação. O **vermelho de erro fica fora dela** — cor de alerta é convenção, não estética, e pintar de azul um botão "apagar tudo" o faria parecer inofensivo | `[hipótese da equipe]` · `[da literatura]` — Nielsen H4 (consistência e padrões) | `1.4.1 Uso de cor (A)`: o vermelho nunca é o único sinal, sempre vem com texto |
+| **DD25** | O **tema de alto contraste continua amarelo sobre preto**, fora da paleta azul. É a combinação dos teclados ampliados e das lupas eletrônicas, e Ana é a razão de o tema existir | Ana `[da literatura]` · `[questionário: item 13]` — 4 de 5 usam algum ajuste de leitura | `1.4.6 Contraste melhorado (AAA)` |
+| **DD26** | A separação entre blocos vem de **preenchimento**, não de linha clara. Uma borda discreta o bastante para parecer elegante mediu 1,38:1 e não alcança os 3:1 exigidos | Medição com `contrast_check.py`, 07/11/2026 | `1.4.11 Contraste de elementos não textuais (AA)` |
+
+Os 34 pares da paleta estão em `apps/web/src/styles/paleta-contraste.json` e são
+medidos por script. **Ao mudar uma cor, meça de novo** — o número que vai para o
+relatório é resultado medido, não promessa:
+
+```bash
+python .claude/skills/lumen-ihc-acessibilidade/scripts/contrast_check.py --palette apps/web/src/styles/paleta-contraste.json
+```
+
+---
+
 ## 5. O que foi deliberadamente deixado de fora
 
 Registrar o que não entrou vale tanto quanto registrar o que entrou: evita que

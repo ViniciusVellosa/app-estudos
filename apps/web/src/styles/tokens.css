@@ -1,40 +1,71 @@
-/* Tokens de design. Todos os pares texto/fundo foram medidos com
-   lumen-ihc-acessibilidade/scripts/contrast_check.py (alvo: AAA 7:1 no texto,
-   3:1 em bordas e foco). Ao mudar uma cor, meça de novo. */
+/* Tokens de design — paleta em tons de azul.
+
+   Todos os pares texto/fundo são medidos com
+   lumen-ihc-acessibilidade/scripts/contrast_check.py
+   (alvo: AAA 7:1 no texto, 3:1 em bordas e foco). Ao mudar uma cor, meça de
+   novo e atualize paleta-contraste.json — o número no relatório é resultado
+   medido, não promessa.
+
+   Duas coisas ficam deliberadamente fora da família azul:
+
+   - o **vermelho de erro**, porque cor de alerta é convenção, não estética.
+     Pintar de azul um botão "apagar tudo" o faria parecer inofensivo. Ele
+     nunca é o único sinal: vem sempre acompanhado de texto (WCAG 1.4.1);
+
+   - o **tema de alto contraste**, que continua amarelo sobre preto. É a
+     combinação dos teclados e das lupas eletrônicas para baixa visão, e a
+     persona Ana é a razão de o tema existir. Trocá-la por azul seria
+     escolher a identidade visual em vez da pessoa.
+
+   Também não existe token de borda "suave". Uma linha clara o bastante para
+   parecer discreta não alcança os 3:1 de `1.4.11 Contraste de elementos não
+   textuais (AA)` — medimos, deu 1,38:1. A separação entre blocos vem de
+   preenchimento (`--surface`, `--surface-forte`), não de linhas fracas. */
 
 :root {
   --font-scale: 1;
+
+  /* Azuis da marca, do mais claro ao mais escuro */
+  --azul-50: #f2f6fd;
+  --azul-100: #e4ecfa;
+  --azul-600: #12499c;
+  --azul-900: #0f1b2d;
+
   --bg: #ffffff;
-  --surface: #f3f4f6;
-  --text: #1a1a1a;
-  --text-muted: #474747;
-  --primary: #0b4fb3;
+  --surface: var(--azul-50);
+  --surface-forte: var(--azul-100);
+  --text: var(--azul-900);
+  --text-muted: #3d4a5c;
+  --primary: var(--azul-600);
   --primary-text: #ffffff;
-  --border: #6b6b6b;
-  --focus: #0b4fb3;
-  --notice-bg: #fff4d6;
-  --notice-text: #3d2e00;
+  --border: #5a6b85;
+  --focus: var(--azul-600);
+  --notice-bg: #d8eefb;
+  --notice-text: #0b3a52;
   --danger: #a3141c;
 }
 
 :root[data-theme="escuro"] {
-  --bg: #121212;
-  --surface: #1f1f1f;
-  --text: #f2f2f2;
-  --text-muted: #c7c7c7;
-  --primary: #9cc2ff;
-  --primary-text: #0a0a0a;
-  --border: #9a9a9a;
-  --focus: #9cc2ff;
-  --notice-bg: #33290a;
-  --notice-text: #ffe8a3;
+  --bg: #0b1220;
+  --surface: #152135;
+  --surface-forte: #1a2740;
+  --text: #e8eefb;
+  --text-muted: #b3c2da;
+  --primary: #8fb8ff;
+  --primary-text: #07101f;
+  --border: #7f93b3;
+  --focus: #8fb8ff;
+  --notice-bg: #0e2e45;
+  --notice-text: #bfe3ff;
   --danger: #ffb3b3;
 }
 
-/* Amarelo sobre preto: a mesma combinação dos teclados ampliados para baixa visão */
+/* Amarelo sobre preto: a mesma combinação dos teclados ampliados para baixa
+   visão. Não entra na paleta azul de propósito — ver o comentário no topo. */
 :root[data-theme="alto-contraste"] {
   --bg: #000000;
   --surface: #000000;
+  --surface-forte: #000000;
   --text: #ffffff;
   --text-muted: #ffffff;
   --primary: #ffff00;
@@ -48,16 +79,17 @@
 
 @media (prefers-color-scheme: dark) {
   :root[data-theme="sistema"] {
-    --bg: #121212;
-    --surface: #1f1f1f;
-    --text: #f2f2f2;
-    --text-muted: #c7c7c7;
-    --primary: #9cc2ff;
-    --primary-text: #0a0a0a;
-    --border: #9a9a9a;
-    --focus: #9cc2ff;
-    --notice-bg: #33290a;
-    --notice-text: #ffe8a3;
+    --bg: #0b1220;
+    --surface: #152135;
+    --surface-forte: #1a2740;
+    --text: #e8eefb;
+    --text-muted: #b3c2da;
+    --primary: #8fb8ff;
+    --primary-text: #07101f;
+    --border: #7f93b3;
+    --focus: #8fb8ff;
+    --notice-bg: #0e2e45;
+    --notice-text: #bfe3ff;
     --danger: #ffb3b3;
   }
 }

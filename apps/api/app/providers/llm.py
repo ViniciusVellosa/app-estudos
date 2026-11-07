@@ -5,8 +5,10 @@ Dois backends:
   (`client.messages.parse(output_format=ModeloPydantic)`; o SDK envia o schema
   em `output_config.format` e valida a resposta).
 - "openai_compatible": qualquer servidor compatível com a API de chat da
-  OpenAI, inclusive modelos locais e gratuitos (Ollama ≥ 0.5 em
-  http://localhost:11434/v1), com `response_format` em JSON schema.
+  OpenAI. Cobre o **Gemini**, pela camada de compatibilidade do Google em
+  https://generativelanguage.googleapis.com/v1beta/openai/ (verificado na
+  documentação oficial em 07/11/2026), e também modelos locais e gratuitos
+  (Ollama ≥ 0.5 em http://localhost:11434/v1).
 
 Os SDKs são dependências opcionais (`uv sync --extra llm`). Confira na
 documentação do provedor, na data, o nome do modelo e os parâmetros.
@@ -132,18 +134,20 @@ class OpenAICompatibleGenerator:
         self.settings = settings
 
     def ask(self, system: str, user: str, output_model: type[M]) -> M:
+        """Pede a resposta já no formato do modelo Pydantic.
+
+        Usa `chat.completions.parse`, o auxiliar do SDK que monta o
+        `response_format` de JSON Schema e devolve o objeto validado. É a
+        forma que a documentação do Gemini mostra para a camada compatível
+        com a OpenAI, e evita montar o schema à mão — o nosso tem união e
+        referências internas, que cada provedor aceita de um jeito.
+        """
         try:
-            resp = self.client.chat.completions.create(
+            resp = self.client.chat.completions.parse(
                 model=self.settings.llm_model,
                 max_tokens=self.settings.llm_max_output_tokens,
                 temperature=0,
-                response_format={
-                    "type": "json_schema",
-                    "json_schema": {
-                        "name": "resposta",
-                        "schema": output_model.model_json_schema(),
-                    },
-                },
+                response_format=output_model,
                 messages=[
                     {"role": "system", "content": system},
                     {"role": "user", "content": user},
@@ -152,6 +156,11 @@ class OpenAICompatibleGenerator:
             choice = resp.choices[0]
             if choice.finish_reason == "length":
                 raise GenerationError("resposta cortada por max_tokens")
+            parsed = getattr(choice.message, "parsed", None)
+            if parsed is not None:
+                return parsed
+            # Provedor que aceitou o pedido mas devolveu só texto: ainda dá
+            # para aproveitar, desde que o texto seja o JSON pedido.
             data = json.loads(choice.message.content or "")
         except GenerationError:
             raise
