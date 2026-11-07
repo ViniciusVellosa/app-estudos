@@ -104,8 +104,17 @@ export default function App() {
 
       <main id="conteudo">
         <h1 ref={titleRef} tabIndex={-1}>{TITLES[screen]}</h1>
-        {/* Região viva: anuncia resultados sem mover o foco (WCAG 4.1.3) */}
-        <p role="status" aria-live="polite" className={status ? "" : "visualmente-oculto"}>{status}</p>
+        {/* Região viva: anuncia resultados sem mover o foco (WCAG 4.1.3).
+            Na conversa ela fica só para leitor de tela: a própria mensagem
+            que chegou já é a confirmação visual, e repetir "parte 3 de 6"
+            acima do chat devolve à tela a engrenagem que tiramos dela. */}
+        <p
+          role="status"
+          aria-live="polite"
+          className={status && screen !== "estudar" ? "" : "visualmente-oculto"}
+        >
+          {status}
+        </p>
         {error && <p role="alert" className="erro">{error}</p>}
 
         {screen === "consentimento" && (

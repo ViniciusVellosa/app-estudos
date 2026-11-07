@@ -1,17 +1,18 @@
 import { useRef, useState } from "react";
 import { api, type Concept, type Explanation, type Interest } from "../api";
-import { PassoMensagem } from "./PassoMensagem";
+import { ParteMensagem } from "./ParteMensagem";
 import { TrocarUniverso } from "./TrocarUniverso";
 import {
-  passoAoTrocarDeUniverso,
+  parteAoTrocarDeUniverso,
+  posicaoDaParte,
   temVersaoTecnica,
-  tituloDoPasso,
-  totalDePassos,
-} from "./passos";
+  tituloDaParte,
+  totalDePartes,
+} from "./partes";
 
 /**
- * A conversa (RF10, decisão D3): uma etapa da explicação por mensagem, no
- * ritmo do aluno.
+ * A conversa (RF10, decisão D3): uma parte da explicação por mensagem, no
+ * ritmo de quem lê.
  *
  * Três regras de acessibilidade mandam no desenho deste componente:
  *
@@ -24,10 +25,13 @@ import {
  *   "Ir para a última mensagem";
  * - as ações ficam na mensagem atual, com rótulo em texto e alvo grande
  *   (WCAG 2.5.8).
+ *
+ * A numeração das partes não aparece no título da mensagem: ela vai na barra
+ * de progresso, para quem vê, e num trecho oculto do título, para quem ouve.
  */
 
 type Mensagem =
-  | { id: number; papel: "app"; tipo: "passo"; passo: number; explicacao: Explanation; tecnica: boolean }
+  | { id: number; papel: "app"; tipo: "parte"; parte: number; explicacao: Explanation; tecnica: boolean }
   | { id: number; papel: "app"; tipo: "info" | "aviso" | "recusa" | "esperando"; texto: string }
   | { id: number; papel: "app"; tipo: "resposta"; texto: string; trechos: string[] }
   | { id: number; papel: "aluno"; tipo: "pergunta"; texto: string };
@@ -52,7 +56,7 @@ export function Chat({
   const [interesseId, setInteresseId] = useState(interests[0]?.id ?? 0);
   const [explicacao, setExplicacao] = useState<Explanation | null>(null);
   const [mensagens, setMensagens] = useState<Mensagem[]>([]);
-  const [passoAtual, setPassoAtual] = useState(0);
+  const [parteAtual, setParteAtual] = useState(0);
   const [ocupado, setOcupado] = useState(false);
   const [trocando, setTrocando] = useState(false);
   const [pergunta, setPergunta] = useState("");
@@ -61,15 +65,15 @@ export function Chat({
 
   const titulo = concepts.find((c) => c.slug === conceito)?.title ?? "";
   const universo = interests.find((i) => i.id === interesseId)?.label ?? "";
-  const total = explicacao ? totalDePassos(explicacao) : 0;
-  const terminou = explicacao !== null && passoAtual >= total;
+  const total = explicacao ? totalDePartes(explicacao) : 0;
+  const terminou = explicacao !== null && parteAtual >= total;
 
   const acrescenta = (...novas: Mensagem[]) => setMensagens((m) => [...m, ...novas]);
 
-  function mensagensDaExplicacao(e: Explanation, passo: number): Mensagem[] {
+  function mensagensDaExplicacao(e: Explanation, parte: number): Mensagem[] {
     const msgs: Mensagem[] = [];
     if (e.notice) msgs.push({ id: novoId(), papel: "app", tipo: "aviso", texto: e.notice });
-    msgs.push({ id: novoId(), papel: "app", tipo: "passo", passo, explicacao: e, tecnica: false });
+    msgs.push({ id: novoId(), papel: "app", tipo: "parte", parte, explicacao: e, tecnica: false });
     return msgs;
   }
 
@@ -83,21 +87,19 @@ export function Chat({
       tipo: "esperando",
       // DD22: a autoverificação são várias chamadas ao modelo; a espera é
       // uma mensagem, e não uma tela travada.
-      texto: "Preparando e conferindo a explicação…",
+      texto: "Preparando e conferindo a explicação",
     };
     acrescenta(espera);
     setStatus("Preparando a explicação…");
     try {
       const resultado = await api.explain(conceito, interesseId);
       setExplicacao(resultado);
-      setPassoAtual(1);
+      setParteAtual(1);
       setMensagens((m) => [
         ...m.filter((x) => x.id !== espera.id),
         ...mensagensDaExplicacao(resultado, 1),
       ]);
-      setStatus(
-        resultado.personalized ? "Explicação pronta. Passo 1." : "Explicação padrão pronta.",
-      );
+      setStatus(resultado.personalized ? "Explicação pronta." : "Explicação padrão pronta.");
     } catch (err) {
       setMensagens((m) => m.filter((x) => x.id !== espera.id));
       setStatus("");
@@ -107,28 +109,28 @@ export function Chat({
     }
   }
 
-  function proximoPasso() {
-    if (!explicacao || passoAtual >= total) return;
-    const n = passoAtual + 1;
-    setPassoAtual(n);
-    acrescenta({ id: novoId(), papel: "app", tipo: "passo", passo: n, explicacao, tecnica: false });
-    setStatus(`${tituloDoPasso(explicacao, n)}.`);
+  function continuar() {
+    if (!explicacao || parteAtual >= total) return;
+    const n = parteAtual + 1;
+    setParteAtual(n);
+    acrescenta({ id: novoId(), papel: "app", tipo: "parte", parte: n, explicacao, tecnica: false });
+    setStatus(`${tituloDaParte(explicacao, n)}${posicaoDaParte(explicacao, n)}.`);
   }
 
   function alternarTecnica(id: number) {
     setMensagens((m) =>
       m.map((msg) =>
-        msg.id === id && msg.tipo === "passo" ? { ...msg, tecnica: !msg.tecnica } : msg,
+        msg.id === id && msg.tipo === "parte" ? { ...msg, tecnica: !msg.tecnica } : msg,
       ),
     );
     const alvo = mensagens.find((m) => m.id === id);
-    if (alvo?.tipo === "passo") {
+    if (alvo?.tipo === "parte") {
       // A mudança acontece dentro de uma mensagem já anunciada; o aviso curto
       // vai pela região de status, para o log não reler o texto inteiro.
       setStatus(
         alvo.tecnica
-          ? `Passo ${alvo.passo}: de volta à explicação com comparação.`
-          : `Passo ${alvo.passo}: versão técnica, sem comparação.`,
+          ? "De volta à explicação com comparação."
+          : "Agora em termos técnicos, sem comparação.",
       );
     }
   }
@@ -146,25 +148,25 @@ export function Chat({
       id: novoId(),
       papel: "app",
       tipo: "esperando",
-      texto: `Trocando para ${rotulo}…`,
+      texto: `Trocando para ${rotulo}`,
     };
     acrescenta(espera);
     try {
       const resultado = await api.explain(conceito, novoId_);
-      const passo = passoAoTrocarDeUniverso(resultado, passoAtual);
+      const parte = parteAoTrocarDeUniverso(resultado, parteAtual);
       setExplicacao(resultado);
-      setPassoAtual(passo);
+      setParteAtual(parte);
       setMensagens((m) => [
         ...m.filter((x) => x.id !== espera.id),
         {
           id: novoId(),
           papel: "app",
           tipo: "info",
-          texto: `Agora usando ${rotulo}. Você está no passo ${passo}; o que leu antes continua acima.`,
+          texto: `Agora usando ${rotulo}. O que você leu antes continua acima, para comparar.`,
         },
-        ...mensagensDaExplicacao(resultado, passo),
+        ...mensagensDaExplicacao(resultado, parte),
       ]);
-      setStatus(`Universo trocado para ${rotulo}. Passo ${passo}.`);
+      setStatus(`Universo trocado para ${rotulo}.`);
     } catch (err) {
       setMensagens((m) => m.filter((x) => x.id !== espera.id));
       setError(err instanceof Error ? err.message : "Não foi possível trocar de universo.");
@@ -195,7 +197,7 @@ export function Chat({
       id: novoId(),
       papel: "app",
       tipo: "esperando",
-      texto: "Conferindo no material…",
+      texto: "Conferindo no material",
     };
     acrescenta(espera);
     try {
@@ -220,7 +222,7 @@ export function Chat({
     setAvaliados((a) => [...a, e.id as number]);
     setStatus(
       kind === "errada"
-        ? "Obrigado. Essa explicação sai de circulação até alguém conferir."
+        ? "Obrigado. Vamos conferir essa explicação."
         : "Obrigado! Sua avaliação foi registrada.",
     );
   }
@@ -228,7 +230,7 @@ export function Chat({
   function recomecar() {
     setExplicacao(null);
     setMensagens([]);
-    setPassoAtual(0);
+    setParteAtual(0);
     setStatus("Escolha outro conceito.");
   }
 
@@ -236,58 +238,74 @@ export function Chat({
 
   if (!explicacao && mensagens.length === 0) {
     return (
-      <form onSubmit={comecar}>
-        {/* DD01: o conceito vem antes do universo. O conteúdo técnico é o
-            assunto; o universo é só como ele vai ser contado. */}
-        <label htmlFor="conceito">O que você quer entender?</label>
-        <select id="conceito" value={conceito} onChange={(ev) => setConceito(ev.target.value)}>
-          {concepts.map((c) => (
-            <option key={c.slug} value={c.slug}>
-              {c.title}
-            </option>
-          ))}
-        </select>
-        <label htmlFor="usar-interesse">Explicar usando</label>
-        <select
-          id="usar-interesse"
-          value={interesseId}
-          onChange={(ev) => setInteresseId(Number(ev.target.value))}
-        >
-          {interests.map((i) => (
-            <option key={i.id} value={i.id}>
-              {i.label}
-            </option>
-          ))}
-        </select>
-        <div className="acoes">
-          <button type="submit" disabled={ocupado} aria-disabled={ocupado}>
-            {ocupado ? "Preparando…" : "Começar a explicar"}
-          </button>
-        </div>
-      </form>
+      <section className="cartao-inicio" aria-labelledby="t-inicio">
+        <h2 id="t-inicio">Qual conteúdo você quer entender?</h2>
+        <p className="dica">
+          A explicação começa por uma comparação com algo que você gosta, em partes curtas.
+          Você pode ver a versão técnica a qualquer momento.
+        </p>
+        <form onSubmit={comecar}>
+          {/* DD01: o conceito vem antes do universo. O conteúdo técnico é o
+              assunto; o universo é só como ele vai ser contado. */}
+          {/* O título do cartão já faz a pergunta; o rótulo nomeia o campo */}
+          <label htmlFor="conceito">Conteúdo</label>
+          <select id="conceito" value={conceito} onChange={(ev) => setConceito(ev.target.value)}>
+            {concepts.map((c) => (
+              <option key={c.slug} value={c.slug}>
+                {c.title}
+              </option>
+            ))}
+          </select>
+          <label htmlFor="usar-interesse">Explicar usando</label>
+          <select
+            id="usar-interesse"
+            value={interesseId}
+            onChange={(ev) => setInteresseId(Number(ev.target.value))}
+          >
+            {interests.map((i) => (
+              <option key={i.id} value={i.id}>
+                {i.label}
+              </option>
+            ))}
+          </select>
+          <div className="acoes">
+            <button type="submit" disabled={ocupado} aria-disabled={ocupado}>
+              {ocupado ? "Preparando…" : "Começar a explicar"}
+            </button>
+          </div>
+        </form>
+      </section>
     );
   }
 
   const ultimaId = mensagens[mensagens.length - 1]?.id;
-  // As ações ficam no último PASSO, não na última mensagem: depois de uma
-  // pergunta, "Ver versão técnica" e "Trocar universo" precisam continuar
-  // ao alcance. Nos passos anteriores elas somem, para não encher a conversa
-  // de botões repetidos — histórico é leitura.
-  const ultimoPassoId = [...mensagens].reverse().find((m) => m.tipo === "passo")?.id;
+  // As ações ficam na última PARTE, não na última mensagem: depois de uma
+  // pergunta, "Ver versão técnica" e "Trocar universo" precisam continuar ao
+  // alcance. Nas partes anteriores elas somem — histórico é leitura.
+  const ultimaParteId = [...mensagens].reverse().find((m) => m.tipo === "parte")?.id;
+  const progresso = total > 0 ? Math.round((Math.max(parteAtual, 1) / total) * 100) : 0;
 
   return (
     <div className="conversa">
-      <div className="conversa-topo">
-        <p className="conversa-assunto">
-          <strong>{titulo}</strong>
-          <br />
-          <span className="dica">
-            usando {universo} · passo {Math.max(passoAtual, 1)} de {total}
-          </span>
+      <header className="conversa-topo">
+        <h2 className="conversa-assunto">{titulo}</h2>
+        <p className="conversa-meta">
+          <span className="chip">{universo}</span>
+          {explicacao?.payload && (
+            <span className="dica">
+              parte {Math.max(parteAtual, 1)} de {total}
+            </span>
+          )}
         </p>
-        {/* O limite do chat dito antes do primeiro erro (DD05, Nielsen H2) */}
-        <p className="dica">Respondo perguntas sobre este conceito. Fora dele, aviso.</p>
-      </div>
+        {/* Decorativa: a posição já está dita em texto logo acima e no
+            título de cada mensagem, então a barra fica fora da leitura. */}
+        <div className="progresso" aria-hidden="true">
+          <span className="progresso-feito" style={{ width: `${progresso}%` }} />
+        </div>
+        <p className="dica conversa-limite">
+          Respondo perguntas sobre este conteúdo. Fora dele, eu aviso.
+        </p>
+      </header>
 
       <div
         role="log"
@@ -309,11 +327,16 @@ export function Chat({
                   <h3 className="rotulo-mensagem">Você perguntou</h3>
                   <p>{m.texto}</p>
                 </>
-              ) : m.tipo === "passo" ? (
+              ) : m.tipo === "parte" ? (
                 <>
-                  <h3>{tituloDoPasso(m.explicacao, m.passo)}</h3>
-                  <PassoMensagem explicacao={m.explicacao} passo={m.passo} tecnica={m.tecnica} />
-                  {m.id === ultimoPassoId && (
+                  <h3>
+                    {tituloDaParte(m.explicacao, m.parte)}
+                    <span className="visualmente-oculto">
+                      {posicaoDaParte(m.explicacao, m.parte)}
+                    </span>
+                  </h3>
+                  <ParteMensagem explicacao={m.explicacao} parte={m.parte} tecnica={m.tecnica} />
+                  {m.id === ultimaParteId && (
                     <AcoesDaMensagem
                       mensagem={m}
                       avaliada={m.explicacao.id !== null && avaliados.includes(m.explicacao.id)}
@@ -328,7 +351,7 @@ export function Chat({
                   <h3 className="rotulo-mensagem">Fora deste conceito</h3>
                   <p>{m.texto}</p>
                   {/* Nunca um beco sem saída: duas saídas explícitas (DD05) */}
-                  <div className="acoes">
+                  <div className="acoes acoes-mensagem">
                     <button type="button" onClick={() => setStatus("Continuando neste conceito.")}>
                       Continuar este conceito
                     </button>
@@ -344,30 +367,35 @@ export function Chat({
                 </>
               ) : m.tipo === "aviso" ? (
                 <p className="aviso">{m.texto}</p>
+              ) : m.tipo === "esperando" ? (
+                <p className="dica">
+                  {m.texto}
+                  <span className="pontinhos" aria-hidden="true">
+                    <i />
+                    <i />
+                    <i />
+                  </span>
+                </p>
               ) : (
-                <p className={m.tipo === "esperando" ? "dica" : ""}>{m.texto}</p>
+                <p>{m.texto}</p>
               )}
             </li>
           ))}
         </ol>
       </div>
 
-      <div className="acoes">
+      <div className="acoes barra-acoes">
         {!terminou && (
-          <button type="button" onClick={proximoPasso} disabled={ocupado} aria-disabled={ocupado}>
-            Próximo passo
+          <button type="button" onClick={continuar} disabled={ocupado} aria-disabled={ocupado}>
+            Continuar
           </button>
         )}
-        {terminou && explicacao.payload && (
+        {terminou && (
           <button type="button" className="secundario" onClick={recomecar}>
-            Estudar outro conceito
+            Estudar outro conteúdo
           </button>
         )}
-        <button
-          type="button"
-          className="secundario"
-          onClick={() => ultimaRef.current?.focus()}
-        >
+        <button type="button" className="texto" onClick={() => ultimaRef.current?.focus()}>
           Ir para a última mensagem
         </button>
       </div>
@@ -409,16 +437,16 @@ function AcoesDaMensagem({
   onTrocar,
   onErrada,
 }: {
-  mensagem: { passo: number; explicacao: Explanation; tecnica: boolean };
+  mensagem: { parte: number; explicacao: Explanation; tecnica: boolean };
   avaliada: boolean;
   onTecnica: () => void;
   onTrocar: () => void;
   onErrada: () => void;
 }) {
-  const { explicacao, passo, tecnica } = mensagem;
+  const { explicacao, parte, tecnica } = mensagem;
   return (
     <div className="acoes acoes-mensagem">
-      {temVersaoTecnica(explicacao, passo) && (
+      {temVersaoTecnica(explicacao, parte) && (
         <button type="button" className="secundario" aria-pressed={tecnica} onClick={onTecnica}>
           {tecnica ? "Voltar para a comparação" : "Ver versão técnica"}
         </button>
@@ -428,7 +456,7 @@ function AcoesDaMensagem({
       </button>
       {explicacao.id !== null &&
         (avaliada ? (
-          <p className="dica">Obrigado, sua avaliação foi registrada.</p>
+          <p className="dica">Obrigado, vamos conferir.</p>
         ) : (
           <button type="button" className="perigo" onClick={onErrada}>
             Está errada

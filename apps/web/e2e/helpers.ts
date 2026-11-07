@@ -50,15 +50,34 @@ export async function entrar(page: Page, universo = "futebol") {
 export async function pedirExplicacao(page: Page, conceito = TCP) {
   // pelo nome, e não pela posição: a ordem da lista muda quando entram
   // conceitos novos
-  await page.getByLabel("O que você quer entender?").selectOption({ label: conceito });
+  // `exact` porque o título do cartão ("Qual conteúdo você quer entender?")
+  // também casaria por trecho
+  await page.getByLabel("Conteúdo", { exact: true }).selectOption({ label: conceito });
   await page.getByRole("button", { name: "Começar a explicar" }).click();
-  await expect(page.getByRole("heading", { name: /Passo 1 de 6/ })).toBeVisible();
+  await expect(parte(page, 1)).toBeVisible();
 }
 
-export async function avancarAte(page: Page, passo: number) {
-  for (let n = 2; n <= passo; n++) {
-    await page.getByRole("button", { name: "Próximo passo" }).click();
-    await expect(page.getByRole("heading", { name: new RegExp(`Passo ${n} de 6`) })).toBeVisible();
+/**
+ * A mensagem de uma parte da explicação.
+ *
+ * O título visível é só o nome ("A cena"); a posição vem de um trecho oculto,
+ * que entra no nome acessível. Procurar por "parte N de 6" portanto testa
+ * exatamente o que o leitor de tela ouve.
+ */
+export function parte(page: Page, n: number) {
+  return page.getByRole("heading", { name: new RegExp(`parte ${n} de 6`) });
+}
+
+/** `exact` porque o nome acessível casa por trecho, e a mensagem de recusa
+ *  também tem um botão "Continuar este conceito". */
+export function botaoContinuar(page: Page) {
+  return page.getByRole("button", { name: "Continuar", exact: true });
+}
+
+export async function avancarAte(page: Page, ate: number) {
+  for (let n = 2; n <= ate; n++) {
+    await botaoContinuar(page).click();
+    await expect(parte(page, n)).toBeVisible();
   }
 }
 

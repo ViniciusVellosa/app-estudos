@@ -44,6 +44,17 @@ Cenários (Etapa 2), confrontadas com as decisões D1 a D6 de 07/11/2026. É a
 iteração que a ISO 9241-210:2019 pede no seu princípio (4): o cenário mostrou
 que o protótipo não servia, e o protótipo mudou.
 
+## O que mudou do esboço para o código
+
+Registrado aqui porque a diferença **é** o registro da iteração, e apagá-la
+seria fingir um processo linear que não aconteceu:
+
+| No esboço | No código | Por quê |
+|---|---|---|
+| Coluna lateral fixa no desktop, com a trilha das seis partes | Coluna única nas duas larguras, com um cartão de assunto no topo | Mesma interface em qualquer tela (decisão D1); a barra de progresso entrega a informação da trilha ocupando bem menos espaço |
+| Título da mensagem: "Passo 3 de 6 — Quem é quem" | Título: "Quem é quem"; a posição vai na barra e num trecho oculto para leitor de tela | "Passo 3 de 6" é vocabulário da engrenagem, não de quem estuda (DD27) |
+| Ações em todas as mensagens de explicação | Ações só na parte mais recente | Seis conjuntos de botões no histórico viram ruído e tabulação extra; mensagem antiga é leitura |
+
 ## Como os arquivos foram gerados
 
 Os SVG saem de um script, para que os dez quadros tenham a mesma grade, as

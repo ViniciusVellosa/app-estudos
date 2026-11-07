@@ -118,6 +118,15 @@ button[aria-pressed="true"] {
   outline: 2px solid var(--text);
 }
 
+button.texto {
+  background: transparent;
+  color: var(--primary);
+  border-color: transparent;
+  font-weight: 500;
+  text-decoration: underline;
+  text-underline-offset: 0.25em;
+}
+
 button.perigo {
   background: transparent;
   color: var(--danger);
@@ -270,28 +279,81 @@ th {
    Interface de conversa (RF10, decisão D3). As medidas aqui são requisito,
    não estética: largura de linha, alvo de toque e empilhamento a 320px.
    A separação entre blocos vem de preenchimento, nunca de linha fraca — ver
-   o comentário no topo de tokens.css. */
+   o comentário no topo de tokens.css.
+
+   A numeração das partes NÃO aparece: quem vê tem a barra de progresso, quem
+   ouve tem o complemento oculto no título da mensagem. "Passo 3 de 6" é
+   vocabulário da engrenagem, não de quem está estudando. */
+
+.cartao-inicio {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--raio-g);
+  padding: var(--e5);
+  box-shadow: var(--sombra);
+}
+
+.cartao-inicio h2 {
+  margin-top: 0;
+  font-size: 1.5rem;
+}
 
 .conversa-topo {
   border: 1px solid var(--border);
-  border-left: 0.375rem solid var(--primary);
-  border-radius: 0.75rem;
-  padding: 0.875rem 1rem;
-  margin-bottom: 1.25rem;
+  border-radius: var(--raio-g);
+  padding: var(--e4) var(--e5);
+  margin-bottom: var(--e5);
   background: var(--surface);
+  box-shadow: var(--sombra);
 }
 
 .conversa-assunto {
-  margin: 0 0 0.375rem;
+  margin: 0;
+  font-size: 1.25rem;
 }
 
-.conversa-topo .dica:last-child {
-  margin-bottom: 0;
+.conversa-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--e2);
+  margin: var(--e3) 0 var(--e2);
+}
+
+.chip {
+  display: inline-block;
+  background: var(--surface-forte);
+  color: var(--primary);
+  border-radius: 999px;
+  padding: 0.125rem 0.75rem;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+/* Barra de progresso: decorativa. A posição em texto é a fonte da verdade,
+   então ela não entra na leitura (aria-hidden no elemento). */
+.progresso {
+  height: 0.375rem;
+  border-radius: 999px;
+  background: var(--surface-forte);
+  overflow: hidden;
+}
+
+.progresso-feito {
+  display: block;
+  height: 100%;
+  background: var(--primary);
+  border-radius: 999px;
+  transition: width 200ms ease-out;
+}
+
+.conversa-limite {
+  margin: var(--e3) 0 0;
 }
 
 /* O log cresce com a conversa; nada aqui rola sozinho (DD10). */
 .log {
-  margin-bottom: 1.25rem;
+  margin-bottom: var(--e5);
 }
 
 .mensagens {
@@ -300,14 +362,15 @@ th {
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 0.875rem;
+  gap: var(--e3);
 }
 
 .mensagem {
   border: 1px solid var(--border);
-  border-radius: 1rem;
-  padding: 0.875rem 1.125rem;
+  border-radius: var(--raio-g);
+  padding: var(--e4) var(--e5);
   background: var(--bg);
+  box-shadow: var(--sombra);
   /* Linha curta: com ampliação, linha longa faz perder o retorno (DD14) */
   max-width: 68ch;
 }
@@ -320,22 +383,22 @@ th {
 }
 
 .mensagem h3 {
-  font-size: 1rem;
-  margin: 0 0 0.5rem;
-  color: var(--text-muted);
+  font-size: 1.0625rem;
+  margin: 0 0 var(--e2);
 }
 
-/* A mensagem do aluno alinha à direita no desktop, mas o reconhecimento vem
-   do rótulo "Você perguntou", não da posição (WCAG 1.3.1 e 1.4.1). */
+/* A mensagem de quem estuda alinha à direita no desktop, mas o
+   reconhecimento vem do rótulo "Você perguntou", não da posição
+   (WCAG 1.3.1 e 1.4.1). */
 .mensagem.aluno {
   background: var(--surface-forte);
   align-self: flex-end;
-  border-bottom-right-radius: 0.25rem;
+  border-bottom-right-radius: var(--e1);
 }
 
-.mensagem.passo {
+.mensagem.parte {
   border-left: 0.25rem solid var(--primary);
-  border-top-left-radius: 0.25rem;
+  border-top-left-radius: var(--e1);
 }
 
 .mensagem.recusa {
@@ -347,49 +410,103 @@ th {
 .mensagem.esperando {
   background: var(--surface);
   border-style: dashed;
+  box-shadow: none;
 }
 
+/* O aviso já tem fundo e barra próprios: a mensagem some em volta dele. */
 .mensagem.aviso {
   border: none;
   padding: 0;
+  box-shadow: none;
+  background: transparent;
 }
 
 .rotulo-mensagem {
-  font-size: 0.875rem;
+  font-size: 0.8125rem !important;
   text-transform: uppercase;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
 }
 
 .etiqueta-tecnica {
   display: inline-block;
-  font-size: 0.875rem;
+  font-size: 0.8125rem;
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.06em;
   color: var(--primary);
   background: var(--surface-forte);
   border-radius: 999px;
-  padding: 0.125rem 0.625rem;
-  margin: 0 0 0.625rem;
+  padding: 0.125rem 0.75rem;
+  margin: 0 0 var(--e3);
+}
+
+.lista-limites {
+  margin: 0;
+}
+
+.resposta-escondida {
+  margin-top: var(--e2);
+}
+
+/* Três pontinhos enquanto a resposta não chega. São decoração: o texto ao
+   lado já diz o que está acontecendo, e a animação some com
+   prefers-reduced-motion pela regra global. */
+.pontinhos {
+  display: inline-flex;
+  gap: 0.22em;
+  margin-left: 0.45em;
+  vertical-align: middle;
+}
+
+.pontinhos i {
+  width: 0.4em;
+  height: 0.4em;
+  border-radius: 50%;
+  background: currentColor;
+  animation: pulsa 1.2s infinite ease-in-out;
+}
+
+.pontinhos i:nth-child(2) {
+  animation-delay: 0.2s;
+}
+.pontinhos i:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+@keyframes pulsa {
+  0%,
+  80%,
+  100% {
+    opacity: 0.3;
+  }
+  40% {
+    opacity: 1;
+  }
 }
 
 /* Alvos de 44px já vêm do `button`; aqui só garantimos que, a 320px, as
    ações empilhem em vez de rolar para o lado (DD15, WCAG 1.4.10). */
 .acoes-mensagem {
-  margin-bottom: 0;
-  gap: 0.5rem;
+  margin: var(--e4) 0 0;
+  gap: var(--e2);
 }
 
 .acoes-mensagem button {
   font-size: 1rem;
   min-height: 2.5rem;
-  padding: 0.375rem 0.875rem;
+  padding: 0.375rem var(--e3);
+}
+
+.barra-acoes {
+  align-items: center;
+  margin: 0 0 var(--e5);
 }
 
 .linha-pergunta {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.5rem;
+  gap: var(--e2);
   align-items: flex-start;
 }
 
@@ -397,26 +514,31 @@ th {
   flex: 1 1 12rem;
 }
 
+/* A caixa de pergunta fica no fluxo, e não grudada no rodapé. Barra fixa
+   embaixo é moderna, mas pode cobrir o elemento que acabou de receber foco
+   (WCAG 2.4.11 Foco não obscurecido) — e a conversa aqui é curta. */
 .caixa-pergunta {
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 0.75rem;
-  padding: 0.25rem 1rem 1rem;
+  border-radius: var(--raio-g);
+  padding: var(--e1) var(--e5) var(--e5);
+  box-shadow: var(--sombra);
 }
 
 .caixa-pergunta label {
-  margin-top: 0.75rem;
+  margin-top: var(--e3);
 }
 
 /* Folha de troca de universo: no celular ocupa a largura toda; no desktop,
    diálogo centrado (DD04, RNF07). */
 .folha {
   border: 2px solid var(--text);
-  border-radius: 1rem;
+  border-radius: var(--raio-g);
   background: var(--bg);
   color: var(--text);
-  padding: 1.25rem;
+  padding: var(--e5);
   width: min(28rem, 100% - 2rem);
+  box-shadow: var(--sombra);
 }
 
 .folha h2 {
@@ -429,17 +551,17 @@ th {
 
 .lista-universos {
   list-style: none;
-  margin: 0.75rem 0;
+  margin: var(--e3) 0;
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: var(--e2);
 }
 
 .lista-universos .universo {
   width: 100%;
   text-align: left;
-  border-radius: 0.75rem;
+  border-radius: var(--raio);
 }
 
 .lista-universos .universo[aria-current="true"] {

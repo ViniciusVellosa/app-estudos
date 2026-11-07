@@ -30,7 +30,7 @@ Critérios WCAG 2.2 aparecem no formato `1.4.10 Realinhar (AA)`.
 | ID | Decisão | Origem | Requisito / persona | Critério |
 |---|---|---|---|---|
 | **DD01** | A pessoa escolhe **o conceito antes do universo**. O conteúdo técnico é o assunto; o universo é como ele será contado | `[hipótese da equipe]`, apoiada em Glynn: a analogia serve ao conceito-alvo, não o contrário `[da literatura]` | RF02, RF03 · todas as personas | — |
-| **DD02** | **Uma etapa da explicação por mensagem**, avançando só quando a pessoa pede ("Próximo passo"). Nada aparece sozinho | `[questionário: item 14]` — 4 de 5 relatam cansaço ao ler textos longos em tela, ninguém respondeu "nunca" · divergência 1 da seção 6 dos Cenários · `[decisão D3]` | RF10 · Ana, Rafael · DP13 | `2.2.2 Pausar, parar, ocultar (A)` |
+| **DD02** | **Uma parte da explicação por mensagem**, avançando só quando a pessoa pede ("Continuar"). Nada aparece sozinho | `[questionário: item 14]` — 4 de 5 relatam cansaço ao ler textos longos em tela, ninguém respondeu "nunca" · divergência 1 da seção 6 dos Cenários · `[decisão D3]` | RF10 · Ana, Rafael · DP13 | `2.2.2 Pausar, parar, ocultar (A)` |
 | **DD03** | A explicação **começa pela analogia**; um botão troca aquele mesmo passo pela versão técnica e volta, mantendo o número do passo | `[questionário: item 11]` — maior média das quatro escalas (4,0); R01 marcou 5 · `[decisão D2]` · `[cenário 3]` | RF04 · Caio · DP05 | `4.1.2 Nome, função, valor (A)` |
 | **DD04** | **Trocar de universo sem sair da explicação**, voltando ao mesmo passo com o novo universo | Divergência 3 da seção 6 dos Cenários · `[decisão D4]` · `[questionário: item 7]` — universos variados entre cinco pessoas | RF09 · Rafael | `3.2.5 Mudança a pedido (AAA)` |
 | **DD05** | O campo aceita **qualquer texto**, mas a resposta fica **presa ao conceito**. Fora dele, recusa educada nomeando o conceito atual e duas saídas: "Continuar este" e "Escolher outro conceito" | `[decisão D5]` · `[da literatura]` — Nielsen H3 (controle e liberdade) e H9 (ajudar a reconhecer e sair do erro) | RF11 | `3.3.1 Identificação de erro (A)` |
@@ -92,11 +92,20 @@ nossa. Está registrado como item aberto na auditoria da Etapa 4.
 
 | ID | Decisão | Origem | Critério |
 |---|---|---|---|
-| **DD18** | **Uma interface só**, que reorganiza: no desktop, coluna fixa à esquerda com conceito, universo e trilha dos passos; no celular, barra superior compacta com o conceito e um botão "trocar" | `[decisão D1]` · RNF07 · `[questionário: item 3]` — 5 de 5 no celular, mas o trabalho em grupo acontece no computador `[hipótese da equipe]` | `1.4.10 (AA)` |
-| **DD19** | A **trilha dos seis passos aparece só no desktop**. No celular, a posição é dita no título de cada mensagem ("Passo 3 de 6") | `[hipótese da equipe]` — repetir a trilha a 320 px custaria metade da tela útil | `1.3.1 Informações e relações (A)` |
+| **DD18** | **Uma interface só, em coluna única**, que apenas se estreita. O conceito, o universo e o progresso ficam num cartão no topo da conversa, igual em qualquer largura | `[decisão D1]` · RNF07 · `[questionário: item 3]` — 5 de 5 estudam pelo celular | `1.4.10 (AA)` |
+| **DD19** | A posição na explicação é dita **duas vezes, por meios diferentes**: uma barra de progresso com "parte 3 de 6" para quem vê, e um complemento oculto no título de cada mensagem para quem ouve | `[hipótese da equipe]` · a barra é decorativa (`aria-hidden`), então a posição precisa existir em texto | `1.3.1 Informações e relações (A)`, `1.4.1 Uso de cor (A)` |
 
-A trilha do desktop não é enfeite: é o que substitui a rolagem para saber onde
-se está, e é o que a persona Caio usa para pular direto ao passo 5.
+**DD18 mudou entre o esboço e o código, e o esboço fica como está.** A tela 2
+dos esboços propõe uma coluna lateral fixa no desktop, com a trilha das seis
+partes. Na implementação virou coluna única nas duas larguras, por três razões:
+a mesma interface em qualquer tela é o que a decisão D1 pede e o que reduz o
+risco de um comportamento só aparecer num tamanho; a linha de leitura fica curta
+nos dois casos (DD14); e a barra de progresso entrega a mesma informação da
+trilha ocupando uma fração do espaço.
+
+Os esboços **não foram redesenhados para esconder essa mudança**: o esboço é o
+que se projetou, e o código é o que se construiu. A diferença entre os dois é o
+registro de que houve iteração, que é o princípio (4) da ISO 9241-210.
 
 ---
 
@@ -108,6 +117,28 @@ se está, e é o que a persona Caio usa para pular direto ao passo 5.
 | **DD21** | **"Está errada" fica em toda mensagem de explicação**, não só no fim da conversa | `[questionário: item 12]` — 3 de 5 · `[cenário 2]`, passo 7 | RF05 · T5 |
 | **DD22** | A espera da autoverificação aparece como **mensagem própria** ("Conferindo a explicação…"), que depois é substituída. A leitura do que já chegou não trava | `[hipótese da equipe]` — a autoverificação são 3 a 5 chamadas ao modelo (ADR 0003), e a latência será visível | RNF04 |
 | **DD23** | Reprovada duas vezes, aparece **a explicação padrão com o motivo**, nunca o rascunho reprovado | ADR 0003 · `[decisão D6]` | RNF03, RNF04 |
+
+---
+
+## 3-A. A engrenagem não aparece
+
+| ID | Decisão | Origem | Critério |
+|---|---|---|---|
+| **DD27** | O título de cada mensagem traz **só o nome da parte** — "A cena", "Quem é quem" —, sem "Passo 3 de 6". A numeração vai para a barra de progresso e para um trecho oculto no título | `[hipótese da equipe]` · `[da literatura]` — Nielsen H2 (falar a língua de quem usa) | `4.1.2 Nome, função, valor (A)` |
+
+As seis partes continuam existindo: vêm do modelo *Teaching-With-Analogies*
+(Glynn, 1991), estão nos critérios de aceite de RF03 e a tarefa T2 do teste de
+usabilidade depende da parte "onde a comparação não vale". O que saiu da tela
+foi o **vocabulário interno** delas.
+
+Ninguém diz "estou no passo 3 de 6" ao explicar algo a um colega. Um aplicativo
+que fala assim expõe a própria engrenagem e parece protótipo, não produto — e,
+pior, convida quem lê a contar passos em vez de acompanhar o raciocínio.
+
+O cuidado aqui é não jogar fora a informação junto com o rótulo. Saber quanto
+falta reduz a ansiedade de quem estuda (Nielsen H1), e para quem usa leitor de
+tela a posição é o que impede a sensação de estar perdido numa lista que cresce.
+Por isso a posição aparece **duas vezes, por meios diferentes**, como diz DD19.
 
 ---
 

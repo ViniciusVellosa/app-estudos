@@ -2,7 +2,9 @@ import { expect, test } from "@playwright/test";
 import {
   alvosGrandesOSuficiente,
   avancarAte,
+  botaoContinuar,
   entrar,
+  parte,
   pedirExplicacao,
   perguntar,
   semRolagemHorizontal,
@@ -35,19 +37,19 @@ test("mensagem nova não rouba o foco nem rola a tela (DD10)", async ({ page }) 
   await entrar(page);
   await pedirExplicacao(page);
 
-  const proximo = page.getByRole("button", { name: "Próximo passo" });
-  await proximo.click();
-  await expect(page.getByRole("heading", { name: /Passo 2 de 6/ })).toBeVisible();
+  const continuar = botaoContinuar(page);
+  await continuar.click();
+  await expect(parte(page, 2)).toBeVisible();
 
   // o foco continua onde a pessoa o deixou: o app não o leva para a mensagem
-  await expect(proximo).toBeFocused();
+  await expect(continuar).toBeFocused();
 
   // O clique vai por `dispatchEvent` de propósito: um clique normal do
   // Playwright rola a página sozinho para alcançar o botão, e isso mascararia
   // justamente o que queremos medir — se o APP rola ao receber mensagem.
   const antes = await page.evaluate(() => window.scrollY);
-  await proximo.dispatchEvent("click");
-  await expect(page.getByRole("heading", { name: /Passo 3 de 6/ })).toBeVisible();
+  await continuar.dispatchEvent("click");
+  await expect(parte(page, 3)).toBeVisible();
   expect(await page.evaluate(() => window.scrollY)).toBe(antes);
 });
 
@@ -122,14 +124,41 @@ test("dá para conversar só com o teclado", async ({ page, isMobile }) => {
   await entrar(page);
   await pedirExplicacao(page);
 
-  // avançar um passo com Tab e Enter
-  await page.getByRole("button", { name: "Próximo passo" }).focus();
+  // avançar uma parte com o teclado
+  await botaoContinuar(page).focus();
   await page.keyboard.press("Enter");
-  await expect(page.getByRole("heading", { name: /Passo 2 de 6/ })).toBeVisible();
+  await expect(parte(page, 2)).toBeVisible();
 
   // perguntar sem tocar no mouse: o Enter no campo envia o formulário
   await page.getByLabel("Sua pergunta sobre este conceito").focus();
   await page.keyboard.type("o que é a janela?");
   await page.keyboard.press("Enter");
   await expect(page.getByRole("heading", { name: "Resposta" })).toBeVisible();
+});
+
+test("a numeração das partes não aparece na tela, mas existe para quem ouve", async ({ page }) => {
+  await entrar(page);
+  await pedirExplicacao(page);
+  await avancarAte(page, 3);
+
+  // O título visível é só o nome da parte. `toHaveText` não serve aqui:
+  // ele devolve o texto inteiro, inclusive o trecho que só o leitor de tela
+  // alcança. O que queremos é o que a pessoa enxerga — os nós de texto
+  // diretos do título, sem o <span> recortado.
+  const titulo = page.getByRole("heading", { name: /parte 3 de 6/ });
+  const visivel = await titulo.evaluate((h) =>
+    [...h.childNodes]
+      .filter((n) => n.nodeType === Node.TEXT_NODE)
+      .map((n) => n.textContent)
+      .join("")
+      .trim(),
+  );
+  expect(visivel).toBe("Quem é quem");
+
+  // mas o nome acessível carrega a posição, porque a barra de progresso é
+  // decorativa e não entra na leitura (DD19)
+  await expect(titulo).toHaveAccessibleName("Quem é quem — parte 3 de 6");
+
+  // e nenhum "Passo N de 6" sobrou na interface
+  await expect(page.getByText(/Passo \d de \d/)).toHaveCount(0);
 });
