@@ -17,12 +17,22 @@ export type Payload = {
 export type Explanation = {
   id: number | null;
   concept_slug: string;
+  interest_label: string | null;
   provider: string;
+  // approved = curada por pessoa; verified = aprovada na autoverificacao da IA
+  // (ADR 0003); neutral = texto-base, quando nao ha personalizada valida
   status: string;
   personalized: boolean;
   payload: Payload | null;
   neutral_text: string | null;
   notice: string | null;
+};
+/** Resposta a uma pergunta livre dentro do conceito (RF11). */
+export type Question = {
+  status: "respondida" | "fora_do_conceito" | "sem_base";
+  resposta: string;
+  trechos: string[];
+  concept_title: string;
 };
 export type ReadingPrefs = {
   font_scale: number;
@@ -98,6 +108,12 @@ export const api = {
       body: JSON.stringify({ concept_slug, interest_id }),
     }),
   neutral: (slug: string) => call<{ base_text: string }>(`/v1/concepts/${slug}/neutral`),
+  // A pergunta nao e gravada no servidor: so e usada para montar a resposta.
+  ask: (slug: string, pergunta: string, interest_id?: number) =>
+    call<Question>(`/v1/concepts/${slug}/questions`, {
+      method: "POST",
+      body: JSON.stringify({ pergunta, interest_id }),
+    }),
   feedback: (id: number, kind: "util" | "errada" | "confusa") =>
     call<void>(`/v1/explanations/${id}/feedback`, { method: "POST", body: JSON.stringify({ kind }) }),
   getPrefs: () => call<ReadingPrefs>("/v1/me/reading-prefs"),

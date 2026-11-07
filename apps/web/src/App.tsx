@@ -5,11 +5,10 @@ import {
   ensureSession,
   forgetSession,
   type Concept,
-  type Explanation,
   type Interest,
   type ReadingPrefs,
 } from "./api";
-import { ExplanationView } from "./components/ExplanationView";
+import { Chat } from "./chat/Chat";
 
 type Screen = "carregando" | "consentimento" | "interesses" | "estudar" | "preferencias" | "meus-dados";
 
@@ -127,7 +126,13 @@ export default function App() {
           />
         )}
         {screen === "estudar" && (
-          <Study concepts={concepts} interests={interests} setStatus={setStatus} setError={setError} />
+          <Chat
+            concepts={concepts}
+            interests={interests}
+            onInteresses={setInterests}
+            setStatus={setStatus}
+            setError={setError}
+          />
         )}
         {screen === "preferencias" && (
           <Prefs
@@ -253,79 +258,6 @@ function Interests(props: {
             <button type="button" onClick={props.onDone}>Começar a estudar</button>
           </div>
         </>
-      )}
-    </>
-  );
-}
-
-function Study(props: {
-  concepts: Concept[];
-  interests: Interest[];
-  setStatus: (s: string) => void;
-  setError: (s: string) => void;
-}) {
-  const [concept, setConcept] = useState(props.concepts[0]?.slug ?? "");
-  const [interestId, setInterestId] = useState(props.interests[0]?.id ?? 0);
-  const [loading, setLoading] = useState(false);
-  const [explanation, setExplanation] = useState<Explanation | null>(null);
-  const [neutralText, setNeutralText] = useState<string | null>(null);
-  const [feedbackSent, setFeedbackSent] = useState(false);
-
-  async function explain(e: React.FormEvent) {
-    e.preventDefault();
-    setLoading(true);
-    setExplanation(null);
-    setFeedbackSent(false);
-    props.setStatus("Preparando a explicação…");
-    try {
-      const result = await api.explain(concept, interestId);
-      setExplanation(result);
-      setNeutralText(result.neutral_text);
-      props.setStatus(result.personalized ? "Explicação pronta." : "Explicação padrão pronta.");
-    } catch (err) {
-      props.setStatus("");
-      props.setError(err instanceof Error ? err.message : "Não foi possível gerar a explicação.");
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  return (
-    <>
-      <form onSubmit={explain}>
-        <label htmlFor="conceito">O que você quer entender?</label>
-        <select id="conceito" value={concept} onChange={(e) => setConcept(e.target.value)}>
-          {props.concepts.map((c) => (
-            <option key={c.slug} value={c.slug}>{c.title}</option>
-          ))}
-        </select>
-        <label htmlFor="usar-interesse">Explicar usando</label>
-        <select id="usar-interesse" value={interestId} onChange={(e) => setInterestId(Number(e.target.value))}>
-          {props.interests.map((i) => (
-            <option key={i.id} value={i.id}>{i.label}</option>
-          ))}
-        </select>
-        <div className="acoes">
-          <button type="submit" disabled={loading} aria-disabled={loading}>
-            {loading ? "Preparando…" : "Explicar"}
-          </button>
-        </div>
-      </form>
-
-      {explanation && (
-        <ExplanationView
-          explanation={explanation}
-          neutralText={neutralText}
-          feedbackSent={feedbackSent}
-          onShowNeutral={async () => {
-            if (!neutralText) setNeutralText((await api.neutral(explanation.concept_slug)).base_text);
-          }}
-          onFeedback={async (kind) => {
-            if (explanation.id === null) return;
-            await api.feedback(explanation.id, kind);
-            setFeedbackSent(true);
-          }}
-        />
       )}
     </>
   );

@@ -234,3 +234,145 @@ td {
     outline-color: Highlight;
   }
 }
+
+/* ---------------------------------------------------------------- chat
+   Interface de conversa (RF10, decisão D3). As medidas aqui são requisito,
+   não estética: largura de linha, alvo de toque e empilhamento a 320px. */
+
+.conversa-topo {
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+  padding: 0.75rem 1rem;
+  margin-bottom: 1rem;
+  background: var(--surface);
+}
+
+.conversa-assunto {
+  margin: 0 0 0.25rem;
+}
+
+/* O log cresce com a conversa; nada aqui rola sozinho (DD10). */
+.log {
+  margin-bottom: 1rem;
+}
+
+.mensagens {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.mensagem {
+  border: 1px solid var(--border);
+  border-radius: 0.75rem;
+  padding: 0.75rem 1rem;
+  /* Linha curta: com ampliação, linha longa faz perder o retorno (DD14) */
+  max-width: 68ch;
+}
+
+.mensagem > :first-child {
+  margin-top: 0;
+}
+.mensagem > :last-child {
+  margin-bottom: 0;
+}
+
+.mensagem h3 {
+  font-size: 1rem;
+  margin: 0 0 0.5rem;
+  color: var(--text-muted);
+}
+
+/* A mensagem do aluno alinha à direita no desktop, mas o reconhecimento vem
+   do rótulo "Você perguntou", não da posição (WCAG 1.3.1 e 1.4.1). */
+.mensagem.aluno {
+  background: var(--surface);
+  align-self: flex-end;
+}
+
+.mensagem.recusa,
+.mensagem.esperando {
+  border-style: dashed;
+}
+
+.rotulo-mensagem {
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.etiqueta-tecnica {
+  font-weight: 600;
+  color: var(--text-muted);
+  margin: 0 0 0.5rem;
+}
+
+/* Alvos de 44px já vêm do `button`; aqui só garantimos que, a 320px, as
+   ações empilhem em vez de rolar para o lado (DD15, WCAG 1.4.10). */
+.acoes-mensagem {
+  margin-bottom: 0;
+}
+
+.linha-pergunta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: flex-start;
+}
+
+.linha-pergunta input[type="text"] {
+  flex: 1 1 12rem;
+}
+
+.caixa-pergunta {
+  border-top: 1px solid var(--border);
+  padding-top: 0.5rem;
+}
+
+/* Folha de troca de universo: no celular ocupa a largura toda; no desktop,
+   diálogo centrado (DD04, RNF07). */
+.folha {
+  border: 2px solid var(--text);
+  border-radius: 0.75rem;
+  background: var(--bg);
+  color: var(--text);
+  padding: 1rem;
+  width: min(28rem, 100% - 2rem);
+}
+
+.folha::backdrop {
+  background: rgb(0 0 0 / 55%);
+}
+
+.lista-universos {
+  list-style: none;
+  margin: 0.5rem 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.lista-universos .universo {
+  width: 100%;
+  text-align: left;
+}
+
+.lista-universos .universo[aria-current="true"] {
+  background: var(--surface);
+  outline: 2px solid var(--text);
+}
+
+.marca-atual {
+  color: var(--text-muted);
+}
+
+details > summary {
+  cursor: pointer;
+  min-height: 2.75rem;
+  display: flex;
+  align-items: center;
+}
