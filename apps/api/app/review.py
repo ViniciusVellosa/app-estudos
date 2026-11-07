@@ -1,9 +1,14 @@
-"""Revisão humana das explicações geradas por IA (linha de comando).
+"""Inspeção das explicações geradas por IA (linha de comando).
 
-    uv run python -m app.review list            # rascunhos e itens marcados como errados
+Desde o ADR 0003 esta ferramenta **não é mais um portão**: a explicação é
+exibida assim que passa pela autoverificação e pelos validadores. O que sobra
+aqui é o trabalho posterior — olhar o que foi gerado e tratar o que alguém
+marcou como "está errada" (RF05), que o `/feedback` move para `under_review`.
+
+    uv run python -m app.review list            # em revisão e rascunhos antigos
     uv run python -m app.review show 12         # mostra uma explicação
-    uv run python -m app.review approve 12      # aprova (passa a ser servida)
-    uv run python -m app.review reject 12       # reprova
+    uv run python -m app.review approve 12      # promove a curada (volta a circular)
+    uv run python -m app.review reject 12       # tira de circulação em definitivo
 
 Em Docker: docker compose exec api python -m app.review list
 """
@@ -24,7 +29,7 @@ def main(argv: list[str]) -> int:
     with SessionLocal() as db:
         if cmd == "list":
             rows = db.scalars(
-                select(Explanation).where(Explanation.status.in_(["draft", "under_review"]))
+                select(Explanation).where(Explanation.status.in_(["draft", "under_review", "rejected"]))
             ).all()
             for r in rows:
                 print(f"{r.id:>4}  {r.status:<13} {r.concept_slug} / {r.interest_label} ({r.provider})")

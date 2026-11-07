@@ -6,10 +6,14 @@ usar um modelo local ou desligar a IA não muda nada fora desta pasta.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Protocol
+from typing import Protocol, TypeVar
+
+from pydantic import BaseModel
 
 from app.content import Concept
 from app.schemas import ExplanationPayload, Refusal
+
+M = TypeVar("M", bound=BaseModel)
 
 
 @dataclass
@@ -29,3 +33,17 @@ class ExplanationGenerator(Protocol):
     name: str
 
     def generate(self, req: ExplanationRequestData) -> ExplanationPayload | Refusal: ...
+
+
+class StructuredChat(Protocol):
+    """Uma pergunta ao modelo com a resposta validada por um modelo Pydantic.
+
+    É o contrato mínimo de que a autoverificação precisa (ADR 0003). Os
+    geradores de IA já têm cliente, chave e tempo limite configurados, então
+    implementam este protocolo e servem de chat para o verificador — sem
+    segunda conexão nem segunda chave.
+    """
+
+    name: str
+
+    def ask(self, system: str, user: str, output_model: type[M]) -> M: ...

@@ -2,7 +2,7 @@
 from app.content import load_concepts
 from app.db import SessionLocal
 from app.schemas import Refusal
-from app.services.explanations import NOTICE_IN_REVIEW, get_explanation
+from app.services.explanations import NOTICE_AI_VERIFIED, get_explanation
 
 SLUG = "tcp-entrega-confiavel"
 
@@ -125,7 +125,13 @@ def test_llm_bad_output_is_retried_then_falls_back(client):
     assert out.personalized is False
 
 
-def test_llm_valid_draft_is_held_for_review(client):
+def test_llm_valid_draft_is_served_after_verification(client):
+    """ADR 0003: não há mais portão humano; o que passa na verificação é exibido.
+
+    Aqui o verificador é o NullVerifier (padrão), então quem decide são os
+    validadores. Os três caminhos da autoverificação estão em
+    tests/test_verification.py.
+    """
     from app.content import load_curated
 
     concept = load_concepts()[SLUG]
@@ -133,4 +139,6 @@ def test_llm_valid_draft_is_held_for_review(client):
     gen = FakeGenerator([good])
     with SessionLocal() as db:
         out = get_explanation(db, concept, "basquete", 2, "iniciante", gen)
-    assert out.notice == NOTICE_IN_REVIEW  # serve_only_approved=True por padrão
+    assert out.personalized is True
+    assert out.status == "verified"
+    assert out.notice == NOTICE_AI_VERIFIED  # o aluno sabe que não houve professor

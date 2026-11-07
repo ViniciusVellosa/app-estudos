@@ -48,14 +48,21 @@ cd apps/web && npx playwright install chromium && npx playwright test   # sobe A
    - Sem orçamento? Instale o [Ollama](https://ollama.com), baixe um modelo e use
      `LLM_BACKEND=openai_compatible` com `LLM_BASE_URL=http://host.docker.internal:11434/v1`
      (ou `http://localhost:11434/v1` fora do Docker).
-2. Explicações geradas ficam **em revisão**. Para revisar:
+2. Explicações geradas passam pela **autoverificação** antes de aparecer
+   ([ADR 0003](docs/adr/0003-autoverificacao-da-ia.md)): o modelo escreve
+   perguntas de checagem sobre o próprio rascunho, responde cada uma numa
+   chamada separada **sem ver o rascunho** e só então dá o veredito.
+   Reprovada duas vezes, o aluno vê a explicação padrão com um aviso.
+3. Para inspecionar o que foi gerado e tratar o que alguém marcou como
+   "está errada" (RF05):
    ```bash
    docker compose exec api python -m app.review list
    docker compose exec api python -m app.review show 3
-   docker compose exec api python -m app.review approve 3
+   docker compose exec api python -m app.review reject 3
    ```
-3. Para o teste de usabilidade, use só explicações aprovadas
-   (`SERVE_ONLY_APPROVED=true`, o padrão).
+4. **Para o teste de usabilidade, use `EXPLANATION_PROVIDER=curated`.** O que
+   se avalia na Etapa 4 é a interface, não o modelo, e assim as sessões não
+   dependem de rede nem de chave.
 
 ## Adicionar conteúdo
 - **Novo conceito:** crie `apps/api/content/concepts/<slug>.md` com o

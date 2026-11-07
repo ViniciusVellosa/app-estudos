@@ -93,7 +93,9 @@ class ExplanationOut(BaseModel):
     concept_slug: str
     interest_label: str | None
     provider: str
-    status: Literal["approved", "draft", "neutral"]
+    # approved = curada por pessoa; verified = aprovada na autoverificacao
+    # (ADR 0003); neutral = texto-base, quando nao ha personalizada valida
+    status: Literal["approved", "verified", "neutral"]
     personalized: bool
     payload: ExplanationPayload | None
     neutral_text: str | None = None

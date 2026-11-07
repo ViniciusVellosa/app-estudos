@@ -12,8 +12,12 @@ Os SDKs são dependências opcionais (`uv sync --extra llm`). Confira na
 documentação do provedor, na data, o nome do modelo e os parâmetros.
 
 Mesmo com saída estruturada, o provedor garante só o FORMATO, não o
-conteúdo. Por isso a resposta passa sempre pelo Pydantic e pelos validadores
-anti-alucinação (app/validators/grounding.py).
+conteúdo. Por isso a resposta passa sempre pelo Pydantic, pela autoverificação
+(app/services/verification.py) e pelos validadores anti-alucinação
+(app/validators/grounding.py).
+
+As duas classes também implementam `StructuredChat.ask`: é por ele que a
+autoverificação faz as próprias perguntas, reaproveitando cliente e chave.
 
 Segurança (OWASP Top 10 para aplicações com LLM, 2025):
 - LLM01 injeção de prompt: o interesse do aluno entra delimitado e escapado,
@@ -21,7 +25,8 @@ Segurança (OWASP Top 10 para aplicações com LLM, 2025):
 - LLM02 vazamento de dados: nenhum identificador do aluno vai para o provedor;
 - LLM05 tratamento de saída: a saída é validada antes de chegar ao aluno e o
   front-end a exibe como texto, nunca como HTML;
-- LLM09 desinformação: texto-base revisado + validadores + revisão humana;
+- LLM09 desinformação: texto-base revisado + autoverificação (ADR 0003) +
+  validadores determinísticos;
 - LLM10 consumo sem limite: max_tokens, timeout e cache de explicações.
 """
 from __future__ import annotations
@@ -34,7 +39,7 @@ from xml.sax.saxutils import escape, quoteattr
 from pydantic import BaseModel, ConfigDict, ValidationError
 
 from app.config import Settings, get_settings
-from app.providers.base import ExplanationRequestData, GenerationError
+from app.providers.base import ExplanationRequestData, GenerationError, M
 from app.schemas import ExplanationPayload, Refusal
 
 PROMPT_PATH = Path(__file__).resolve().parent.parent / "prompts" / "explicacao_sistema.md"
@@ -50,10 +55,6 @@ class GenerationResult(BaseModel):
 @lru_cache
 def system_prompt() -> str:
     return PROMPT_PATH.read_text(encoding="utf-8")
-
-
-def output_schema() -> dict:
-    return GenerationResult.model_json_schema()
 
 
 def user_message(req: ExplanationRequestData) -> str:
@@ -75,13 +76,6 @@ def user_message(req: ExplanationRequestData) -> str:
     return "\n".join(parts)
 
 
-def parse_result(data: dict) -> ExplanationPayload | Refusal:
-    try:
-        return GenerationResult.model_validate(data).resultado
-    except ValidationError as exc:
-        raise GenerationError(f"resposta fora do formato: {exc.error_count()} erro(s)") from exc
-
-
 class AnthropicGenerator:
     name = "llm:anthropic"
 
@@ -97,14 +91,14 @@ class AnthropicGenerator:
         )
         self.settings = settings
 
-    def generate(self, req: ExplanationRequestData) -> ExplanationPayload | Refusal:
+    def ask(self, system: str, user: str, output_model: type[M]) -> M:
         try:
             response = self.client.messages.parse(
                 model=self.settings.llm_model,
                 max_tokens=self.settings.llm_max_output_tokens,
-                system=system_prompt(),
-                messages=[{"role": "user", "content": user_message(req)}],
-                output_format=GenerationResult,
+                system=system,
+                messages=[{"role": "user", "content": user}],
+                output_format=output_model,
             )
         except ValidationError as exc:
             raise GenerationError("resposta fora do formato") from exc
@@ -114,7 +108,10 @@ class AnthropicGenerator:
             raise GenerationError("resposta cortada por max_tokens; aumente LLM_MAX_OUTPUT_TOKENS")
         if response.stop_reason == "refusal" or response.parsed_output is None:
             raise GenerationError("o modelo recusou ou não devolveu a saída estruturada")
-        return response.parsed_output.resultado
+        return response.parsed_output
+
+    def generate(self, req: ExplanationRequestData) -> ExplanationPayload | Refusal:
+        return self.ask(system_prompt(), user_message(req), GenerationResult).resultado
 
 
 class OpenAICompatibleGenerator:
@@ -134,7 +131,7 @@ class OpenAICompatibleGenerator:
         )
         self.settings = settings
 
-    def generate(self, req: ExplanationRequestData) -> ExplanationPayload | Refusal:
+    def ask(self, system: str, user: str, output_model: type[M]) -> M:
         try:
             resp = self.client.chat.completions.create(
                 model=self.settings.llm_model,
@@ -142,11 +139,14 @@ class OpenAICompatibleGenerator:
                 temperature=0,
                 response_format={
                     "type": "json_schema",
-                    "json_schema": {"name": "explicacao", "schema": output_schema()},
+                    "json_schema": {
+                        "name": "resposta",
+                        "schema": output_model.model_json_schema(),
+                    },
                 },
                 messages=[
-                    {"role": "system", "content": system_prompt()},
-                    {"role": "user", "content": user_message(req)},
+                    {"role": "system", "content": system},
+                    {"role": "user", "content": user},
                 ],
             )
             choice = resp.choices[0]
@@ -159,7 +159,13 @@ class OpenAICompatibleGenerator:
             raise GenerationError("o modelo não devolveu JSON válido") from exc
         except Exception as exc:
             raise GenerationError(f"falha ao chamar o provedor: {type(exc).__name__}") from exc
-        return parse_result(data)
+        try:
+            return output_model.model_validate(data)
+        except ValidationError as exc:
+            raise GenerationError(f"resposta fora do formato: {exc.error_count()} erro(s)") from exc
+
+    def generate(self, req: ExplanationRequestData) -> ExplanationPayload | Refusal:
+        return self.ask(system_prompt(), user_message(req), GenerationResult).resultado
 
 
 def build_llm_generator(settings: Settings | None = None):

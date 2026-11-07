@@ -1,11 +1,24 @@
-"""Regra de negócio: escolher, gerar, validar e servir explicações.
+"""Regra de negócio: escolher, gerar, verificar e servir explicações.
 
 Fluxo de POST /v1/explanations:
-1. explicação aprovada no banco (curada ou revisada) para conceito+interesse+nível;
-2. se não houver e o provedor for "llm": gera, valida, tenta de novo uma vez;
-3. se a IA falhar, recusar ou a explicação ainda não estiver revisada,
-   devolve a explicação neutra (texto-base) com um aviso claro.
-O aluno nunca fica sem resposta e nunca recebe conteúdo reprovado.
+1. explicação já aprovada no banco (curada) ou já verificada, para
+   conceito+interesse+nível — é o cache, e evita gastar IA de novo;
+2. se não houver e o provedor for "llm": gera, **autoverifica** (D6, ADR 0003),
+   passa pelos validadores determinísticos e, se algo reprovar, tenta de novo
+   uma única vez com os motivos;
+3. recusa do modelo, falha ou segunda reprovação devolvem a explicação neutra
+   (o texto-base revisado) com um aviso que diz o motivo.
+
+O aluno nunca fica sem resposta e **nunca** recebe conteúdo reprovado.
+
+Estados de uma explicação no banco:
+
+| status         | significa                                    | é servida?     |
+|----------------|----------------------------------------------|----------------|
+| `approved`     | curada, escrita e revisada por pessoa        | sim            |
+| `verified`     | gerada por IA, aprovada na autoverificação   | sim, com aviso |
+| `under_review` | alguém marcou "está errada" (RF05)           | não            |
+| `rejected`     | reprovada na revisão manual                  | não            |
 """
 from __future__ import annotations
 
@@ -21,6 +34,7 @@ from app.content import Concept, load_concepts, load_curated, slugify
 from app.db import Explanation
 from app.providers.base import ExplanationGenerator, ExplanationRequestData, GenerationError
 from app.schemas import ExplanationOut, ExplanationPayload, Refusal
+from app.services.verification import NullVerifier, SelfVerifier, draft_text
 from app.validators.grounding import validate_explanation
 
 log = logging.getLogger(__name__)
@@ -29,15 +43,21 @@ NOTICE_NO_PERSONALIZED = (
     "Ainda não há explicação personalizada revisada para esse interesse. "
     "Mostrando a explicação padrão."
 )
-NOTICE_IN_REVIEW = (
-    "Geramos uma explicação com o seu interesse, mas ela ainda está em revisão. "
-    "Por enquanto, veja a explicação padrão."
+NOTICE_NOT_VERIFIED = (
+    "Não conseguimos confirmar a explicação adaptada ao seu interesse. "
+    "Para não mostrar algo errado, aqui está a explicação padrão."
 )
 NOTICE_NO_FAITHFUL_ANALOGY = (
     "Não encontramos uma comparação fiel com esse interesse para este conteúdo. "
     "Mostrando a explicação padrão."
 )
-NOTICE_AI_DRAFT = "Explicação adaptada por IA ao seu interesse e ainda não revisada por um professor."
+NOTICE_AI_VERIFIED = (
+    "Explicação adaptada por IA ao seu interesse. Ela passou pela conferência "
+    "automática, mas não foi revisada por um professor."
+)
+
+# Os dois estados que podem chegar ao aluno.
+SERVED = ("approved", "verified")
 
 
 def seed_curated(db: Session) -> int:
@@ -101,6 +121,8 @@ def neutral(concept: Concept, interest_label: str | None, notice: str) -> Explan
 
 
 def to_out(row: Explanation, notice: str | None = None) -> ExplanationOut:
+    if notice is None and row.status == "verified":
+        notice = NOTICE_AI_VERIFIED
     return ExplanationOut(
         id=row.id,
         concept_slug=row.concept_slug,
@@ -115,9 +137,18 @@ def to_out(row: Explanation, notice: str | None = None) -> ExplanationOut:
 
 
 def generate_validated(
-    generator: ExplanationGenerator, data: ExplanationRequestData
+    generator: ExplanationGenerator,
+    data: ExplanationRequestData,
+    verifier: SelfVerifier | None = None,
 ) -> tuple[ExplanationPayload | Refusal | None, list[str]]:
-    """Gera e valida; em caso de reprovação, uma nova tentativa com as correções."""
+    """Gera, autoverifica e valida; reprovou, tenta mais uma vez com os motivos.
+
+    A ordem está no ADR 0003: primeiro a autoverificação, que julga o
+    conteúdo, depois os validadores determinísticos, que conferem forma e
+    ancoragem no texto-base. Duas tentativas no total — a terceira raramente
+    acerta e o aluno está esperando.
+    """
+    verifier = verifier or NullVerifier()
     errors: list[str] = []
     for _attempt in range(2):
         try:
@@ -128,6 +159,13 @@ def generate_validated(
             continue
         if isinstance(result, Refusal):
             return result, errors
+
+        verdict = verifier.verify(draft_text(result), data.concept)
+        if not verdict.aprovada:
+            errors.extend(verdict.motivos)
+            data.feedback = verdict.as_feedback()
+            continue
+
         report = validate_explanation(result, data.concept.rules)
         if report.ok:
             return result, errors
@@ -144,55 +182,47 @@ def get_explanation(
     level: str,
     generator: ExplanationGenerator | None,
     settings: Settings | None = None,
+    verifier: SelfVerifier | None = None,
 ) -> ExplanationOut:
     settings = settings or get_settings()
     label = slugify(interest_label)
 
-    approved = db.scalar(
+    # Cache: curada ou já verificada antes. Vale para qualquer aluno, porque
+    # a explicação não guarda nada de quem pediu.
+    cached = db.scalar(
         select(Explanation)
         .where(
             Explanation.concept_slug == concept.slug,
             Explanation.interest_label == label,
             Explanation.level == level,
-            Explanation.status == "approved",
+            Explanation.status.in_(SERVED),
         )
         .order_by(Explanation.id.desc())
     )
-    if approved:
-        return to_out(approved)
+    if cached:
+        return to_out(cached)
 
     if generator is None:
         return neutral(concept, interest_label, NOTICE_NO_PERSONALIZED)
 
-    draft = db.scalar(
-        select(Explanation).where(
-            Explanation.concept_slug == concept.slug,
-            Explanation.interest_label == label,
-            Explanation.level == level,
-            Explanation.status == "draft",
-        )
-    )
-    if draft is None:
-        data = ExplanationRequestData(concept, interest_label, depth, level)
-        result, errors = generate_validated(generator, data)
-        if isinstance(result, Refusal):
-            log.info("recusa do modelo para %s/%s: %s", concept.slug, label, result.motivo)
-            return neutral(concept, interest_label, NOTICE_NO_FAITHFUL_ANALOGY)
-        if result is None:
-            log.warning("geração reprovada %s/%s: %s", concept.slug, label, errors)
-            return neutral(concept, interest_label, NOTICE_NO_PERSONALIZED)
-        draft = Explanation(
-            concept_slug=concept.slug,
-            interest_label=label,
-            level=level,
-            provider=generator.name,
-            prompt_version=settings.prompt_version,
-            status="draft",
-            payload=result.model_dump(),
-        )
-        db.add(draft)
-        db.commit()
+    data = ExplanationRequestData(concept, interest_label, depth, level)
+    result, errors = generate_validated(generator, data, verifier)
+    if isinstance(result, Refusal):
+        log.info("recusa do modelo para %s/%s: %s", concept.slug, label, result.motivo)
+        return neutral(concept, interest_label, NOTICE_NO_FAITHFUL_ANALOGY)
+    if result is None:
+        log.warning("reprovada duas vezes %s/%s: %s", concept.slug, label, errors)
+        return neutral(concept, interest_label, NOTICE_NOT_VERIFIED)
 
-    if settings.serve_only_approved:
-        return neutral(concept, interest_label, NOTICE_IN_REVIEW)
-    return to_out(draft, NOTICE_AI_DRAFT)
+    verified = Explanation(
+        concept_slug=concept.slug,
+        interest_label=label,
+        level=level,
+        provider=generator.name,
+        prompt_version=settings.prompt_version,
+        status="verified",
+        payload=result.model_dump(),
+    )
+    db.add(verified)
+    db.commit()
+    return to_out(verified)

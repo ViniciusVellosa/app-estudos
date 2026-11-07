@@ -27,9 +27,6 @@ class Settings(BaseSettings):
     llm_max_output_tokens: int = 1500
     prompt_version: str = "1"
 
-    # Só explicações aprovadas aparecem para o aluno? (True no teste de usabilidade)
-    serve_only_approved: bool = True
-
     consent_version: str = "2026-1"
 
 

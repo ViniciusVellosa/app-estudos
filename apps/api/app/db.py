@@ -63,7 +63,10 @@ class Explanation(Base):
     level: Mapped[str] = mapped_column(String(20))
     provider: Mapped[str] = mapped_column(String(40))
     prompt_version: Mapped[str] = mapped_column(String(20))
-    status: Mapped[str] = mapped_column(String(20))  # draft | approved | under_review | rejected
+    # approved = curada por pessoa | verified = gerada por IA e aprovada na
+    # autoverificacao (ADR 0003) | under_review = alguem marcou "esta errada"
+    # | rejected = reprovada na revisao manual. So os dois primeiros sao servidos.
+    status: Mapped[str] = mapped_column(String(20))
     payload: Mapped[dict] = mapped_column(JSON)
     created_at: Mapped[datetime] = mapped_column(default=utcnow)
 

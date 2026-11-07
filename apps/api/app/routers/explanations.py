@@ -44,7 +44,14 @@ def request_explanation(
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Interesse não encontrado.")
     generator = request.app.state.generator  # None quando o provedor é "curated"
     return get_explanation(
-        db, concept, interest.label, interest.depth, body.level, generator, get_settings()
+        db,
+        concept,
+        interest.label,
+        interest.depth,
+        body.level,
+        generator,
+        get_settings(),
+        verifier=request.app.state.verifier,
     )
 
 

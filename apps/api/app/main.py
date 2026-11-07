@@ -14,6 +14,7 @@ from app.db import SessionLocal, init_db
 from app.providers.base import GenerationError
 from app.routers import explanations, me
 from app.services.explanations import seed_curated
+from app.services.verification import LlmSelfVerifier, NullVerifier
 
 log = logging.getLogger("app")
 
@@ -26,11 +27,19 @@ async def lifespan(app: FastAPI):
         seeded = seed_curated(db)
         log.info("explicações curadas carregadas: %s", seeded)
     app.state.generator = None
+    # Sem IA não há o que autoverificar: o conteúdo curado é escrito por pessoa
+    # e já passou pelos validadores na carga.
+    app.state.verifier = NullVerifier()
     if settings.explanation_provider == "llm":
         from app.providers.llm import build_llm_generator
 
         try:
-            app.state.generator = build_llm_generator(settings)
+            generator = build_llm_generator(settings)
+            app.state.generator = generator
+            # O gerador também implementa StructuredChat: a autoverificação
+            # reaproveita cliente, chave e tempo limite já configurados.
+            app.state.verifier = LlmSelfVerifier(generator)
+            log.info("IA ativa (%s) com autoverificação", generator.name)
         except GenerationError as exc:
             # o app continua funcionando só com conteúdo curado
             log.error("IA desativada: %s", exc)
