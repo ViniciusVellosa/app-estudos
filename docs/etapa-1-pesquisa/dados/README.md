@@ -1,7 +1,8 @@
 # Dados da pesquisa
 
-As respostas chegam por WhatsApp, então **você sabe quem respondeu**. O cuidado
-aqui é um só, e é prático: o que você prometeu no convite tem que valer na planilha.
+As respostas vieram de um formulário eletrônico **sem identificação** (sem nome,
+e-mail ou telefone; ver o plano de pesquisa, seção 5.3). O cuidado aqui é um só:
+o que foi prometido no texto de apresentação tem que valer na planilha.
 
 ## 1. Nome e telefone não entram
 
@@ -35,9 +36,9 @@ substituto da conferência — confira o arquivo antes de salvar.
 
 O convite promete uma data de descarte. Cumpra:
 
-- **Apagar até:** [preencher: a mesma data que está na Mensagem 1]
+- **Apagar até:** 09/11/2026, como informado no texto de apresentação do formulário
 
-Descartar inclui as conversas do WhatsApp, não só a planilha.
+Descartar inclui a planilha de respostas do Google Forms e o próprio formulário, não só este CSV. Se o CSV for enviado ao GitHub, apagá-lo depois não o remove do histórico. Por isso o `.gitignore` **ignora todo o conteúdo desta pasta, exceto este README** — o CSV de respostas fica só na sua máquina.
 
 ---
 

@@ -51,4 +51,3 @@ $RECYCLE.BIN/
 # qualquer etapa. Ver docs/etapa-1-pesquisa/dados/README.md.
 docs/**/dados/*
 !docs/**/dados/*.md
-!docs/**/dados/*-anonimizado.csv
