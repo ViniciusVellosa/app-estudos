@@ -1,0 +1,154 @@
+# Decisões de design — Etapa 3 (Desenhar)
+
+Este documento fecha o terceiro elo da cadeia de rastreabilidade do projeto:
+
+```
+achado (Etapa 1) → persona e cenário (Etapa 2) → requisito → DECISÃO DE DESIGN (aqui)
+  → elemento no código → tarefa do teste (Etapa 4) → resultado → melhoria
+```
+
+Cada decisão recebe um código **DD**, citado nos esboços, no código e no
+protocolo do teste. Quem discordar de uma decisão deve conseguir, lendo a linha
+dela, saber exatamente qual evidência derrubar.
+
+## Como ler os rótulos de origem
+
+| Rótulo | Significa |
+|---|---|
+| `[questionário: item N]` | Dado da Etapa 1, contagem sobre **n = 5**. Não é amostra representativa |
+| `[hipótese da equipe]` | Suposição nossa. Continua marcada assim no relatório final |
+| `[da literatura]` | Vem de fonte citada no fim deste documento, não dos nossos dados |
+| `[decisão Dn]` | Decisão de projeto de 07/11/2026, registrada em `../requisitos/requisitos.md` |
+| `[cenário n]` | Cenário de atividade da Etapa 2 |
+
+Critérios WCAG 2.2 aparecem no formato `1.4.10 Realinhar (AA)`.
+
+---
+
+## 1. Estrutura da explicação e do diálogo
+
+| ID | Decisão | Origem | Requisito / persona | Critério |
+|---|---|---|---|---|
+| **DD01** | A pessoa escolhe **o conceito antes do universo**. O conteúdo técnico é o assunto; o universo é como ele será contado | `[hipótese da equipe]`, apoiada em Glynn: a analogia serve ao conceito-alvo, não o contrário `[da literatura]` | RF02, RF03 · todas as personas | — |
+| **DD02** | **Uma etapa da explicação por mensagem**, avançando só quando a pessoa pede ("Próximo passo"). Nada aparece sozinho | `[questionário: item 14]` — 4 de 5 relatam cansaço ao ler textos longos em tela, ninguém respondeu "nunca" · divergência 1 da seção 6 dos Cenários · `[decisão D3]` | RF10 · Ana, Rafael · DP13 | `2.2.2 Pausar, parar, ocultar (A)` |
+| **DD03** | A explicação **começa pela analogia**; um botão troca aquele mesmo passo pela versão técnica e volta, mantendo o número do passo | `[questionário: item 11]` — maior média das quatro escalas (4,0); R01 marcou 5 · `[decisão D2]` · `[cenário 3]` | RF04 · Caio · DP05 | `4.1.2 Nome, função, valor (A)` |
+| **DD04** | **Trocar de universo sem sair da explicação**, voltando ao mesmo passo com o novo universo | Divergência 3 da seção 6 dos Cenários · `[decisão D4]` · `[questionário: item 7]` — universos variados entre cinco pessoas | RF09 · Rafael | `3.2.5 Mudança a pedido (AAA)` |
+| **DD05** | O campo aceita **qualquer texto**, mas a resposta fica **presa ao conceito**. Fora dele, recusa educada nomeando o conceito atual e duas saídas: "Continuar este" e "Escolher outro conceito" | `[decisão D5]` · `[da literatura]` — Nielsen H3 (controle e liberdade) e H9 (ajudar a reconhecer e sair do erro) | RF11 | `3.3.1 Identificação de erro (A)` |
+| **DD06** | Pergunta **dentro** do conceito que o texto-base não responde vira **"não consegui verificar isso"**, nunca um palpite | `[questionário: item 12]` — 3 de 5 perderiam a confiança no app diante de um erro · `[decisão D6]` | RNF04 · todas as personas | — |
+| **DD07** | O passo **"onde a comparação falha" é obrigatório**, não um extra que se possa pular | `[da literatura]` — Glynn: toda analogia tem limite, e omiti-lo produz concepção equivocada; carga cognitiva: detalhes atraentes e irrelevantes atrapalham | RF03 · T2 do teste · DP01 | — |
+| **DD08** | A resposta da pergunta de transferência fica **escondida atrás de um botão** | `[da literatura]` — recuperação ativa (*retrieval practice*): ver a resposta junto da pergunta anula o efeito | RF03 · DP13 | — |
+
+### Por que o chat, e o que ele não promete
+
+A aparência de chat foi escolhida porque é a interface que o público-alvo já
+usa para estudar: **5 de 5 respondentes usam IA para estudar e 3 deles quase
+todos os dias** `[questionário: itens 4 e 5]`. Não é uma escolha estética — é
+reconhecimento de que o concorrente real do app é o ChatGPT, e que exigir um
+modelo de interação diferente custaria aprendizado sem ganho.
+
+O risco dessa escolha é o oposto: **parecer um chat promete conversa livre**, e
+este app não entrega isso (DD05). A mitigação é dizer o limite **antes** do
+primeiro erro — na coluna lateral no desktop e no texto de abertura no celular
+—, não só depois que a pessoa já perguntou `[da literatura]`, Nielsen H2
+(correspondência com o mundo real) e H1 (visibilidade do estado do sistema).
+
+---
+
+## 2. Acessibilidade da interface de chat
+
+Um chat é uma lista que cresce sozinha. Para quem usa leitor de tela ou
+ampliação, é exatamente o padrão que mais costuma quebrar. As decisões abaixo
+existem para que ele não quebre, e cada uma vira um item verificável na
+auditoria da Etapa 4.
+
+| ID | Decisão | Origem | Critério |
+|---|---|---|---|
+| **DD09** | O histórico é uma região `role="log"` com `aria-live="polite"`. Anuncia-se a **mensagem pronta**, nunca o texto sendo montado | `[da literatura]` · `[decisão D3]` | `4.1.3 Mensagens de status (AA)` |
+| **DD10** | **Nada rola nem recebe foco sozinho** quando chega mensagem nova. Quem quiser descer usa o botão "Ir para a última mensagem" | `[da literatura]` — movimento automático desorienta quem usa ampliação: a pessoa lê uma janela de poucos caracteres e perde o ponto | `2.2.2 (A)`, `3.2.5 (AAA)` |
+| **DD11** | Todos os alvos têm **no mínimo 24 × 24 px**, com 44 × 44 px como meta nos botões de ação da mensagem | `[questionário: item 3]` — 5 de 5 estudam pelo celular · Ana | `2.5.8 Tamanho do alvo mínimo (AA)` |
+| **DD12** | O campo de pergunta tem **rótulo visível acima**, não placeholder | `[da literatura]` — placeholder some ao digitar e costuma falhar no contraste | `3.3.2 Instruções ou rótulos (A)` |
+| **DD13** | Todo estado é dito **por texto**, além da cor ou da forma: universo atual marcado com "atual", passo em versão técnica marcado com "téc" | Ana `[da literatura]` | `1.4.1 Uso de cor (A)` |
+| **DD14** | A **largura da linha de texto não passa de ~80 caracteres**, mesmo em tela larga | `[da literatura]` — linha longa dificulta o retorno visual, sobretudo com ampliação | `1.4.8 Apresentação visual (AAA)` |
+| **DD15** | A 320 px, os botões de ação da mensagem **empilham**; nada é escondido e nada rola para o lado | `[questionário: item 3]` · RNF01, RNF07 | `1.4.10 Realinhar (AA)` |
+| **DD16** | A folha de troca de universo **prende o foco**, fecha com `Esc` e **devolve o foco ao botão que a abriu** | `[da literatura]` | `2.1.2 Sem armadilha de teclado (A)`, `2.4.3 Ordem de foco (A)` |
+| **DD17** | Os **três temas e a escala de fonte continuam valendo no chat**, inclusive em "Enorme" (2×) | `[questionário: item 13]` — 4 de 5 usam algum ajuste de leitura | `1.4.4 Redimensionar texto (AA)`, `1.4.6 Contraste melhorado (AAA)` |
+
+### Um conflito que ficou em aberto
+
+`role="log"` com `aria-live="polite"` faz o leitor de tela ler **a mensagem
+inteira** quando ela chega. Numa explicação técnica de vários parágrafos, isso
+é muito texto de uma vez, e a pessoa não consegue interromper com facilidade.
+
+A alternativa seria deixar o histórico mudo e anunciar só um aviso curto
+("Passo 3 pronto") numa região `role="status"`, deixando a leitura do conteúdo
+para a navegação normal. **Mantivemos `role="log"` porque é o que a decisão D3
+registrou** — mas a troca não é obviamente pior, e este é um dos pontos que
+pedem teste com uma pessoa que use leitor de tela no dia a dia, não opinião
+nossa. Está registrado como item aberto na auditoria da Etapa 4.
+
+---
+
+## 3. Responsividade (decisão D1)
+
+| ID | Decisão | Origem | Critério |
+|---|---|---|---|
+| **DD18** | **Uma interface só**, que reorganiza: no desktop, coluna fixa à esquerda com conceito, universo e trilha dos passos; no celular, barra superior compacta com o conceito e um botão "trocar" | `[decisão D1]` · RNF07 · `[questionário: item 3]` — 5 de 5 no celular, mas o trabalho em grupo acontece no computador `[hipótese da equipe]` | `1.4.10 (AA)` |
+| **DD19** | A **trilha dos seis passos aparece só no desktop**. No celular, a posição é dita no título de cada mensagem ("Passo 3 de 6") | `[hipótese da equipe]` — repetir a trilha a 320 px custaria metade da tela útil | `1.3.1 Informações e relações (A)` |
+
+A trilha do desktop não é enfeite: é o que substitui a rolagem para saber onde
+se está, e é o que a persona Caio usa para pular direto ao passo 5.
+
+---
+
+## 4. Confiança no conteúdo (decisão D6)
+
+| ID | Decisão | Origem | Requisito |
+|---|---|---|---|
+| **DD20** | Explicação gerada por IA traz **aviso em mensagem própria**, não em letra miúda no rodapé | `[questionário: item 12]` · `[da literatura]` — Nielsen H1 | RNF04 |
+| **DD21** | **"Está errada" fica em toda mensagem de explicação**, não só no fim da conversa | `[questionário: item 12]` — 3 de 5 · `[cenário 2]`, passo 7 | RF05 · T5 |
+| **DD22** | A espera da autoverificação aparece como **mensagem própria** ("Conferindo a explicação…"), que depois é substituída. A leitura do que já chegou não trava | `[hipótese da equipe]` — a autoverificação são 3 a 5 chamadas ao modelo (ADR 0003), e a latência será visível | RNF04 |
+| **DD23** | Reprovada duas vezes, aparece **a explicação padrão com o motivo**, nunca o rascunho reprovado | ADR 0003 · `[decisão D6]` | RNF03, RNF04 |
+
+---
+
+## 5. O que foi deliberadamente deixado de fora
+
+Registrar o que não entrou vale tanto quanto registrar o que entrou: evita que
+a ausência pareça esquecimento.
+
+| Fora do escopo | Por quê |
+|---|---|
+| **RF08** — começar pela versão técnica por padrão | Adiado pela decisão D2. Caio é atendido pelo botão de alternar (DD03). **O teste de usabilidade vai dizer se isso bastou**: se o participante de perfil cético reclamar do clique extra em T3, RF08 volta para a lista |
+| Streaming da resposta, palavra por palavra | Conflita com DD09: anunciar texto em construção numa região viva é ruído para leitor de tela |
+| Histórico de conversas entre sessões | Não há conta de usuário (RF01). A conversa vive na sessão anônima |
+| Voz (ditar a pergunta, ouvir a resposta) | Seria útil para Ana `[da literatura]`, mas não cabe no prazo. Fica como trabalho futuro no relatório |
+
+---
+
+## 6. Ordem real do processo, sem maquiagem
+
+A tela inicial e os seis passos **já existiam em código** antes desta etapa;
+seu esboço documenta o que havia. As quatro telas novas — chat, troca de
+universo, versão técnica e recusa — **foram desenhadas antes de existir
+código**, a partir das divergências da seção 6 dos Cenários.
+
+Dito de outro modo: a Etapa 2 encontrou três divergências entre o que os
+cenários pediam e o que o protótipo fazia, e a Etapa 3 as resolveu com decisões
+registradas (D1 a D6) e com estes esboços. É iteração de verdade, e é o que a
+ISO 9241-210:2019 chama de princípio (4).
+
+## Fontes
+
+- **GLYNN, S. M.** Explaining science concepts: a Teaching-with-Analogies
+  model. In: *The Psychology of Learning Science*. Erlbaum, 1991.
+- **ISO 9241-210:2019** — design centrado no ser humano, princípio (4).
+- **NIELSEN, J.** *10 Usability Heuristics for User Interface Design.* Nielsen
+  Norman Group, 1994 (rev. 2024).
+- **ROSSON, M. B.; CARROLL, J. M.** *Usability Engineering.* Morgan Kaufmann, 2002.
+- **SWELLER, J.; AYRES, P.; KALYUGA, S.** *Cognitive Load Theory.* Springer, 2011.
+- **W3C.** *WCAG 2.2*, 2023 — critérios citados por número e nível.
+- **W3C.** *Making Content Usable for People with Cognitive and Learning
+  Disabilities (COGA)*, 2021.
+- Biblioteca do Lumen: `references/acessibilidade.md` (RA01–RA24) e
+  `references/carga-cognitiva-e-personalizacao.md` (DP01–DP18).
+- ADR [0003](../adr/0003-autoverificacao-da-ia.md) deste repositório.

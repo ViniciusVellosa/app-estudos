@@ -42,14 +42,20 @@ Cole essa saída no relatório. É resultado medido, não afirmação.
 
 ## O que falta para fechar a etapa
 
-- [ ] **Baixa fidelidade.** Esboço em papel ou wireframe das telas principais,
-      fotografado. É o que mostra que houve processo de design, e não só código
-      escrito direto. Mesmo rascunho a lápis serve — e é rápido
-- [ ] **`decisoes-de-design.md`** neste diretório: cada decisão visual apontando
-      para um achado da Etapa 1, uma persona da Etapa 2 ou um critério WCAG.
-      Formato: *decisão → origem → critério*
-- [ ] Frames ou prints em **320px de largura**, para o relatório mostrar o reflow
-      (o CI já testa isso; aqui é a evidência visual)
+- [x] **Baixa fidelidade.** Cinco telas em [`esbocos/`](esbocos/), cada uma com o
+      quadro de celular (320 px) e o de desktop, e legenda numerada ligando cada
+      marca a requisito, persona ou critério WCAG. Quatro delas — chat, troca de
+      universo, versão técnica e recusa — foram desenhadas **antes** do código
+- [x] **[`decisoes-de-design.md`](decisoes-de-design.md)**: 23 decisões (DD01–DD23)
+      no formato *decisão → origem → requisito/persona → critério*, com os rótulos
+      de origem preservados e uma seção do que ficou deliberadamente de fora
+- [x] **[ADR 0003](../adr/0003-autoverificacao-da-ia.md)** — autoverificação da IA
+      (decisão D6), que substitui em parte o ADR 0002
+- [ ] **Implementar as decisões no app:** chat, botão analogia ↔ técnica, troca de
+      universo, texto livre restrito ao conceito e autoverificação, com testes de
+      API e e2e em viewport de celular e de desktop
+- [ ] Prints em **320px de largura** com a interface de chat, para o relatório
+      mostrar o reflow (o CI já testa isso; aqui é a evidência visual)
 - [ ] Print dos três temas lado a lado
 
 ### Por que a baixa fidelidade importa, mesmo com o app pronto
@@ -78,6 +84,9 @@ origem:
 | Três temas: claro, escuro e alto contraste | RF06, RA01, RA20 — e a pergunta 13 |
 | Tabela de mapeamento que empilha a 320px | RA05, `1.4.10 Realinhar (AA)` |
 | Região viva anunciando "explicação pronta" | RA13, `4.1.3 Mensagens de status (AA)` |
+
+As decisões tomadas **nesta etapa**, inclusive as que ainda não têm código, estão
+em [`decisoes-de-design.md`](decisoes-de-design.md) com os códigos DD01 a DD23.
 
 ## Fontes
 
