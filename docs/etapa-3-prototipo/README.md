@@ -51,9 +51,11 @@ Cole essa saída no relatório. É resultado medido, não afirmação.
       de origem preservados e uma seção do que ficou deliberadamente de fora
 - [x] **[ADR 0003](../adr/0003-autoverificacao-da-ia.md)** — autoverificação da IA
       (decisão D6), que substitui em parte o ADR 0002
-- [ ] **Implementar as decisões no app:** chat, botão analogia ↔ técnica, troca de
-      universo, texto livre restrito ao conceito e autoverificação, com testes de
-      API e e2e em viewport de celular e de desktop
+- [x] **Implementar as decisões no app:** chat (RF10), botão analogia ↔ técnica
+      (RF04), troca de universo (RF09), texto livre restrito ao conceito (RF11) e
+      autoverificação da IA (D6). 63 testes de API, 7 de unidade e 31 e2e nos dois
+      viewports; **zero violações do axe** no consentimento, no chat, na recusa,
+      com a folha de troca aberta e a 320 px com alto contraste
 - [ ] Prints em **320px de largura** com a interface de chat, para o relatório
       mostrar o reflow (o CI já testa isso; aqui é a evidência visual)
 - [ ] Print dos três temas lado a lado
