@@ -125,14 +125,22 @@ export default function App() {
             setError={setError}
           />
         )}
-        {screen === "estudar" && (
-          <Chat
-            concepts={concepts}
-            interests={interests}
-            onInteresses={setInterests}
-            setStatus={setStatus}
-            setError={setError}
-          />
+        {/* A conversa fica montada e apenas escondida nas outras telas.
+            Desmontar apagaria o histórico, e a tarefa T4 do teste de
+            usabilidade pede justamente que a pessoa vá ajustar a leitura no
+            meio da explicação: voltar e encontrar a conversa vazia seria um
+            problema sério. `hidden` tira o conteúdo da árvore de
+            acessibilidade, então nada escondido é lido ou tabulável. */}
+        {interests.length > 0 && (
+          <div hidden={screen !== "estudar"}>
+            <Chat
+              concepts={concepts}
+              interests={interests}
+              onInteresses={setInterests}
+              setStatus={setStatus}
+              setError={setError}
+            />
+          </div>
         )}
         {screen === "preferencias" && (
           <Prefs

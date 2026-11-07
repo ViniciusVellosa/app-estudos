@@ -47,14 +47,54 @@ def test_unknown_interest_falls_back_to_neutral(client, auth):
     assert body["notice"]
 
 
-def test_wrong_feedback_takes_explanation_out_of_circulation(client, auth):
+def test_wrong_feedback_on_curated_is_recorded_without_removing_it(client, auth):
+    """RF05 em conteúdo escrito à mão: registra, mas não derruba.
+
+    Um clique anônimo não pode tirar do ar material revisado por pessoa — no
+    teste de usabilidade, o primeiro participante a cumprir a tarefa T5
+    deixaria os seguintes sem explicação. Quem decide é a revisão
+    (`python -m app.review`).
+    """
+    from sqlalchemy import func, select
+
+    from app.db import Feedback
+
     interest = client.post("/v1/me/interests", json={"label": "futebol", "depth": 2}, headers=auth).json()
     req = {"concept_slug": SLUG, "interest_id": interest["id"]}
     first = client.post("/v1/explanations", json=req, headers=auth).json()
+    assert first["provider"] == "curated"
+
     r = client.post(f"/v1/explanations/{first['id']}/feedback", json={"kind": "errada"}, headers=auth)
     assert r.status_code == 204
+
     second = client.post("/v1/explanations", json=req, headers=auth).json()
-    assert second["personalized"] is False
+    assert second["personalized"] is True, "conteúdo curado continua em circulação"
+
+    with SessionLocal() as db:
+        assert db.scalar(select(func.count()).select_from(Feedback)) == 1
+
+
+def test_wrong_feedback_on_ai_content_takes_it_out_of_circulation(client):
+    """Em conteúdo gerado por IA, a dúvida tira do ar na hora (RNF03)."""
+    from app.content import load_curated
+
+    concept = load_concepts()[SLUG]
+    gen = FakeGenerator([load_curated(SLUG, "futebol")])
+    with SessionLocal() as db:
+        gerada = get_explanation(db, concept, "pokemon", 2, "iniciante", gen)
+    assert gerada.status == "verified"
+
+    token = client.post("/v1/session").json()["token"]
+    cabecalho = {"Authorization": f"Bearer {token}"}
+    client.post("/v1/consent", json={"version": "2026-1", "accepted": True}, headers=cabecalho)
+    r = client.post(
+        f"/v1/explanations/{gerada.id}/feedback", json={"kind": "errada"}, headers=cabecalho
+    )
+    assert r.status_code == 204
+
+    with SessionLocal() as db:
+        de_novo = get_explanation(db, concept, "pokemon", 2, "iniciante", None)
+    assert de_novo.personalized is False
 
 
 def test_delete_me_erases_everything(client, auth):

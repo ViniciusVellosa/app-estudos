@@ -118,8 +118,15 @@ def send_feedback(
     if explanation is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Explicação não encontrada.")
     db.add(Feedback(explanation_id=explanation.id, user_id=user.id, kind=body.kind, comment=body.comment))
-    if body.kind == "errada":
-        # sai de circulação até alguém revisar (python -m app.review)
+    if body.kind == "errada" and explanation.provider != "curated":
+        # Conteúdo gerado por IA sai de circulação na hora: na dúvida, o aluno
+        # seguinte vê a explicação padrão (RNF03, ADR 0003).
+        #
+        # Conteúdo curado, não: foi escrito e revisado por pessoa, e um clique
+        # anônimo não pode derrubá-lo — qualquer participante do teste de
+        # usabilidade tiraria do ar o material dos próximos. A avaliação fica
+        # registrada e aparece em `python -m app.review`, que é onde alguém
+        # decide.
         explanation.status = "under_review"
     db.commit()
     return Response(status_code=204)
