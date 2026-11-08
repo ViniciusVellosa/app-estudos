@@ -78,6 +78,23 @@ def user_message(req: ExplanationRequestData) -> str:
     return "\n".join(parts)
 
 
+def descreve_falha(exc: Exception) -> str:
+    """Mensagem de falha com o código HTTP, quando houver.
+
+    Sem isso, um 429 (limite de uso) e um 500 do provedor chegam ao log como
+    o mesmo "falha ao chamar o provedor", e descobrir qual dos dois é custa
+    várias tentativas — cada uma gastando cota.
+
+    Só o tipo e o código: o corpo da resposta não entra, para não arrastar
+    nada que o provedor devolva junto.
+    """
+    codigo = getattr(exc, "status_code", None)
+    return (
+        f"falha ao chamar o provedor: {type(exc).__name__}"
+        + (f" (HTTP {codigo})" if codigo else "")
+    )
+
+
 class AnthropicGenerator:
     name = "llm:anthropic"
 
@@ -89,7 +106,9 @@ class AnthropicGenerator:
         if not settings.llm_api_key or not settings.llm_model:
             raise GenerationError("defina LLM_API_KEY e LLM_MODEL")
         self.client = anthropic.Anthropic(
-            api_key=settings.llm_api_key, timeout=settings.llm_timeout_s
+            api_key=settings.llm_api_key,
+            timeout=settings.llm_timeout_s,
+            max_retries=settings.llm_max_retries,
         )
         self.settings = settings
 
@@ -105,7 +124,7 @@ class AnthropicGenerator:
         except ValidationError as exc:
             raise GenerationError("resposta fora do formato") from exc
         except Exception as exc:  # rede, limite de uso, tempo esgotado
-            raise GenerationError(f"falha ao chamar o provedor: {type(exc).__name__}") from exc
+            raise GenerationError(descreve_falha(exc)) from exc
         if response.stop_reason == "max_tokens":
             raise GenerationError("resposta cortada por max_tokens; aumente LLM_MAX_OUTPUT_TOKENS")
         if response.stop_reason == "refusal" or response.parsed_output is None:
@@ -130,6 +149,7 @@ class OpenAICompatibleGenerator:
             api_key=settings.llm_api_key or "nao-usado-localmente",
             base_url=settings.llm_base_url or None,
             timeout=settings.llm_timeout_s,
+            max_retries=settings.llm_max_retries,
         )
         self.settings = settings
 
@@ -171,7 +191,7 @@ class OpenAICompatibleGenerator:
         except json.JSONDecodeError as exc:
             raise GenerationError("o modelo não devolveu JSON válido") from exc
         except Exception as exc:
-            raise GenerationError(f"falha ao chamar o provedor: {type(exc).__name__}") from exc
+            raise GenerationError(descreve_falha(exc)) from exc
         try:
             return output_model.model_validate(data)
         except ValidationError as exc:
