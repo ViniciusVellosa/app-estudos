@@ -70,6 +70,33 @@ def test_openai_compatible_returns_the_parsed_object():
     assert registro["model"] == "gemini-teste"
 
 
+def test_openai_compatible_envia_o_esforco_de_raciocinio_quando_configurado():
+    good = load_curated(SLUG, "futebol")
+    choice = SimpleNamespace(
+        finish_reason="stop",
+        message=SimpleNamespace(parsed=GenerationResult(resultado=good), content=None),
+    )
+    registro: dict = {}
+    gen = openai_with(choice, registro)
+    gen.settings = Settings(llm_model="gemini-teste", llm_reasoning_effort="low")
+    gen.generate(req())
+    assert registro["reasoning_effort"] == "low"
+
+
+def test_openai_compatible_omite_o_esforco_quando_vazio():
+    """Nem todo provedor aceita o parâmetro; vazio significa não enviar."""
+    good = load_curated(SLUG, "futebol")
+    choice = SimpleNamespace(
+        finish_reason="stop",
+        message=SimpleNamespace(parsed=GenerationResult(resultado=good), content=None),
+    )
+    registro: dict = {}
+    gen = openai_with(choice, registro)
+    gen.settings = Settings(llm_model="llama-local", llm_reasoning_effort="")
+    gen.generate(req())
+    assert "reasoning_effort" not in registro
+
+
 def test_openai_compatible_parses_refusal_from_plain_text():
     """Provedor que aceita o pedido mas devolve só texto ainda é aproveitado."""
     content = json.dumps({"resultado": {"status": "sem_analogia_fiel", "motivo": "sem paralelo"}})

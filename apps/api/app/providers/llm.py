@@ -142,6 +142,9 @@ class OpenAICompatibleGenerator:
         com a OpenAI, e evita montar o schema à mão — o nosso tem união e
         referências internas, que cada provedor aceita de um jeito.
         """
+        extras = {}
+        if self.settings.llm_reasoning_effort:
+            extras["reasoning_effort"] = self.settings.llm_reasoning_effort
         try:
             resp = self.client.chat.completions.parse(
                 model=self.settings.llm_model,
@@ -152,6 +155,7 @@ class OpenAICompatibleGenerator:
                     {"role": "system", "content": system},
                     {"role": "user", "content": user},
                 ],
+                **extras,
             )
             choice = resp.choices[0]
             if choice.finish_reason == "length":

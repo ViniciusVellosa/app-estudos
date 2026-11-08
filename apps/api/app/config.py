@@ -29,6 +29,15 @@ class Settings(BaseSettings):
     llm_api_key: str = Field(default="", repr=False)
     llm_base_url: str = ""  # para servidores compatíveis com OpenAI (ex.: Ollama local)
     llm_timeout_s: float = 30.0
+    # Quanto o modelo pode "pensar" antes de responder, nos provedores que
+    # expõem isso (Gemini, OpenAI). Vazio = não enviar o parâmetro.
+    #
+    # "low" é o padrão aqui de propósito: as perguntas de checagem da
+    # autoverificação são julgamentos curtos contra um texto que já está no
+    # pedido, e raciocínio longo nelas custa tempo sem ganho claro — Huang et
+    # al. (2024) mostram que mais autorraciocínio não melhora de forma
+    # confiável. Nos modelos Gemini 3 o raciocínio não pode ser desligado.
+    llm_reasoning_effort: Literal["", "none", "low", "medium", "high"] = "low"
     llm_max_output_tokens: int = 1500
     prompt_version: str = "1"
 
