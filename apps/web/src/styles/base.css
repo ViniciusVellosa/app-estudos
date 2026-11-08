@@ -90,6 +90,51 @@ a {
 .marca {
   margin: 0;
   font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: var(--e2);
+}
+
+/* Símbolo do app (components/Simbolo.tsx). Em em: cresce com o texto. */
+.simbolo {
+  width: 3.75em;
+  height: 2.4em;
+  flex: none;
+}
+.simbolo-peca {
+  stroke: var(--logo-borda);
+  stroke-width: 2.5;
+  stroke-linejoin: round;
+}
+.simbolo-peca-a {
+  fill: var(--logo-a);
+}
+.simbolo-peca-b {
+  fill: var(--logo-b);
+}
+.simbolo-traco {
+  fill: none;
+  stroke: var(--logo-icone);
+  stroke-width: 3.6;
+  stroke-linejoin: round;
+}
+.simbolo-preenchido {
+  fill: var(--logo-icone);
+}
+.simbolo-anel-fundo {
+  fill: none;
+  stroke: var(--logo-icone);
+  stroke-width: 3.2;
+}
+.simbolo-anel-separador {
+  fill: none;
+  stroke: var(--logo-b);
+  stroke-width: 5.6;
+}
+.simbolo-anel-frente {
+  fill: none;
+  stroke: var(--logo-icone);
+  stroke-width: 3.2;
 }
 
 .topo nav {

@@ -9,6 +9,7 @@ import {
   type ReadingPrefs,
 } from "./api";
 import { Chat } from "./chat/Chat";
+import { Simbolo } from "./components/Simbolo";
 
 type Screen = "carregando" | "consentimento" | "estudar" | "preferencias" | "meus-dados";
 
@@ -89,7 +90,10 @@ export default function App() {
       <a className="pular botao" href="#conteudo">Pular para o conteúdo</a>
       <header className="topo">
         <div className="topo-conteudo">
-          <p className="marca">Estudos do Seu Jeito</p>
+          <p className="marca">
+            <Simbolo />
+            <span>Estudos do Seu Jeito</span>
+          </p>
           {screen !== "carregando" && screen !== "consentimento" && (
             <nav aria-label="Principal">
               {screen === "estudar" ? (

@@ -56,6 +56,13 @@
   /* Sombra é profundidade, nunca informação: some no modo de alto
      contraste do sistema e nada se perde. */
   --sombra: 0 1px 2px rgb(9 26 56 / 8%), 0 10px 28px rgb(9 26 56 / 7%);
+
+  /* Símbolo do app. Decorativo (o nome vem escrito ao lado), mas ainda assim
+     as peças se destacam do fundo em todos os temas. */
+  --logo-a: var(--azul-600);
+  --logo-b: var(--azul-900);
+  --logo-borda: transparent;
+  --logo-icone: #ffffff;
 }
 
 :root[data-theme="escuro"] {
@@ -72,6 +79,10 @@
   --notice-text: #bfe3ff;
   --danger: #ffb3b3;
   --sombra: 0 1px 2px rgb(0 0 0 / 40%), 0 10px 28px rgb(0 0 0 / 30%);
+  --logo-a: #2f6fd8;
+  --logo-b: #13213a;
+  --logo-borda: #8fb8ff;
+  --logo-icone: #ffffff;
 }
 
 /* Amarelo sobre preto: a mesma combinação dos teclados ampliados para baixa
@@ -90,6 +101,11 @@
   --notice-text: #ffff00;
   --danger: #ff8080;
   --sombra: none;
+  /* alto contraste: peças pretas com contorno amarelo, ícones amarelos */
+  --logo-a: #000000;
+  --logo-b: #000000;
+  --logo-borda: #ffff00;
+  --logo-icone: #ffff00;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -107,5 +123,9 @@
     --notice-text: #bfe3ff;
     --danger: #ffb3b3;
     --sombra: 0 1px 2px rgb(0 0 0 / 40%), 0 10px 28px rgb(0 0 0 / 30%);
+    --logo-a: #2f6fd8;
+    --logo-b: #13213a;
+    --logo-borda: #8fb8ff;
+    --logo-icone: #ffffff;
   }
 }
