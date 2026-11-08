@@ -136,8 +136,14 @@ class GeminiPesquisador:
             )
         except Exception as exc:  # rede, chave, limite de uso
             codigo = getattr(exc, "code", None) or getattr(exc, "status_code", None)
+            # A mensagem do Google diz QUAL limite estourou (por minuto, por
+            # dia, ou cota zero no plano). Vai para o log e para o teste
+            # rápido; o aluno nunca vê (a rota troca por uma frase simples).
+            detalhe = (getattr(exc, "message", None) or str(exc) or "").strip().replace("\n", " ")
             raise PesquisaError(
-                f"falha ao pesquisar: {type(exc).__name__}" + (f" (HTTP {codigo})" if codigo else "")
+                f"falha ao pesquisar: {type(exc).__name__}"
+                + (f" (HTTP {codigo})" if codigo else "")
+                + (f": {detalhe[:400]}" if detalhe else "")
             ) from exc
         return interpreta(resposta.text or "", fontes_de(resposta))
 
