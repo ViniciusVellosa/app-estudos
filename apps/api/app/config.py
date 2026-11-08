@@ -29,6 +29,10 @@ class Settings(BaseSettings):
     llm_api_key: str = Field(default="", repr=False)
     llm_base_url: str = ""  # para servidores compatíveis com OpenAI (ex.: Ollama local)
     llm_timeout_s: float = 30.0
+    # O SDK repete sozinho em 429 e 5xx, com espera entre as tentativas. Isso
+    # é bom em produção e péssimo para diagnosticar: um limite de uso (429)
+    # chega como tempo esgotado depois de dois minutos, escondendo a causa.
+    llm_max_retries: int = 1
     # Quanto o modelo pode "pensar" antes de responder, nos provedores que
     # expõem isso (Gemini, OpenAI). Vazio = não enviar o parâmetro.
     #
@@ -40,6 +44,12 @@ class Settings(BaseSettings):
     llm_reasoning_effort: Literal["", "none", "low", "medium", "high"] = "low"
     llm_max_output_tokens: int = 1500
     prompt_version: str = "1"
+
+    # Pesquisa na web de assuntos fora da biblioteca (decisão D8). "gemini"
+    # usa a ferramenta google_search da API do Gemini, com a mesma chave
+    # LLM_API_KEY. Vazio = só a biblioteca de conteúdos.
+    pesquisa_provider: Literal["", "gemini"] = ""
+    pesquisa_model: str = ""  # vazio = o mesmo LLM_MODEL
 
     consent_version: str = "2026-1"
 

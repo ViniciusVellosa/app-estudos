@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { api, type Concept, type Explanation, type Interest } from "../api";
+import { api, type Concept, type Explanation, type Fonte, type Interest } from "../api";
 import { ParteMensagem } from "./ParteMensagem";
 import {
   parteAoTrocarDeUniverso,
@@ -33,7 +33,7 @@ import {
 type Sugestao = { rotulo: string; texto: string };
 
 type Mensagem =
-  | { id: number; papel: "app"; tipo: "texto"; texto: string; destaque?: string }
+  | { id: number; papel: "app"; tipo: "texto"; texto: string; fontes?: Fonte[] }
   | { id: number; papel: "app"; tipo: "parte"; parte: number; explicacao: Explanation; tecnica: boolean }
   | { id: number; papel: "app"; tipo: "aviso" | "esperando"; texto: string }
   | { id: number; papel: "app"; tipo: "recusa"; texto: string }
@@ -131,28 +131,40 @@ export function Chat({
     falaDoAluno(t);
     setSugestoes([]);
     setOcupado(true);
-    const espera = esperando("Procurando esse conteúdo");
+    // Pode ser uma pesquisa na web (D8), que leva alguns segundos
+    const espera = esperando("Procurando e pesquisando esse assunto");
     try {
       const r = await api.reconhecerAssunto(t);
       tira(espera.id);
       if (r.encontrado && r.conceito) {
         setConceito(r.conceito);
+        if (r.pesquisado) {
+          acrescenta({
+            id: novoId(),
+            papel: "app",
+            tipo: "texto",
+            texto: `Pesquisei sobre ${r.conceito.title} na web. Vou usar estas fontes como referência e conferir a explicação com elas:`,
+            fontes: r.fontes,
+          });
+        }
         perguntarUniverso(
           `Combinado, vamos estudar ${r.conceito.title}. ` +
             "Agora me diga um universo que você conhece bem: um jogo, uma série, um esporte, um anime… " +
             "Vou começar explicando com uma comparação com ele.",
         );
       } else {
+        const temSugestoes = r.sugestoes.length > 0;
         acrescenta({
           id: novoId(),
           papel: "app",
           tipo: "texto",
-          texto:
-            `Ainda não tenho material de referência sobre “${t}”, então prefiro não arriscar ` +
-            "uma explicação que pode estar errada. Por enquanto, consigo explicar:",
+          texto: r.motivo
+            ? `${r.motivo}${temSugestoes ? " Se quiser, posso explicar:" : ""}`
+            : `Ainda não tenho material de referência sobre “${t}”, então prefiro não arriscar ` +
+              "uma explicação que pode estar errada. Por enquanto, consigo explicar:",
         });
         setSugestoes(r.sugestoes.map((c) => ({ rotulo: c.title, texto: c.title })));
-        setStatus("Conteúdo não encontrado. Veja as sugestões.");
+        setStatus("Não deu para usar esse assunto. Veja a mensagem.");
       }
     } catch (err) {
       tira(espera.id);
@@ -425,7 +437,21 @@ export function Chat({
                   </span>
                 </p>
               ) : (
-                <p>{m.texto}</p>
+                <>
+                  <p>{m.texto}</p>
+                  {m.tipo === "texto" && m.fontes && m.fontes.length > 0 && (
+                    <ol className="fontes">
+                      {m.fontes.map((f) => (
+                        <li key={f.url}>
+                          <a href={f.url} target="_blank" rel="noopener noreferrer">
+                            {f.titulo}
+                            <span className="visualmente-oculto"> (abre em nova aba)</span>
+                          </a>
+                        </li>
+                      ))}
+                    </ol>
+                  )}
+                </>
               )}
             </li>
           ))}

@@ -174,3 +174,52 @@ test("RF09 — trocar de universo de dentro da explicação", async ({ page }) =
   // de inventar: é o comportamento do modo Mágico de Oz, e precisa ficar dito
   await expect(page.getByRole("heading", { name: "Explicação padrão" })).toBeVisible();
 });
+
+test("D8 — assunto pesquisado na web mostra as fontes antes de explicar", async ({ page }) => {
+  // A API do Gemini não roda no teste: a resposta da pesquisa é simulada aqui.
+  await page.route("**/v1/assuntos/reconhecer", (rota) =>
+    rota.fulfill({
+      json: {
+        encontrado: true,
+        conceito: { slug: "web-arvore-b", title: "Árvore B", discipline: "Pesquisado na web" },
+        sugestoes: [],
+        pesquisado: true,
+        fontes: [
+          { titulo: "Árvore B — Wikipédia", url: "https://pt.wikipedia.org/wiki/%C3%81rvore_B" },
+          { titulo: "B-tree — CLRS, cap. 18 (resumo)", url: "https://example.edu/btree" },
+        ],
+        motivo: null,
+      },
+    }),
+  );
+  await entrar(page);
+  await escrever(page, "árvore B");
+  await expect(page.getByText(/Pesquisei sobre Árvore B na web/)).toBeVisible();
+  await expect(page.getByRole("link", { name: /Árvore B — Wikipédia/ })).toHaveAttribute(
+    "href",
+    "https://pt.wikipedia.org/wiki/%C3%81rvore_B",
+  );
+  await expect(page.getByText(/Combinado, vamos estudar Árvore B/)).toBeVisible();
+  await semViolacoes(page);
+  await semRolagemHorizontal(page);
+  await page.screenshot({ path: `/home/claude/check/shots/${test.info().project.name}-5-pesquisa.png` });
+});
+
+test("D8 — pesquisa que falha vira mensagem clara, sem detalhe técnico", async ({ page }) => {
+  await page.route("**/v1/assuntos/reconhecer", (rota) =>
+    rota.fulfill({
+      json: {
+        encontrado: false,
+        conceito: null,
+        sugestoes: [{ slug: "tcp-entrega-confiavel", title: "Entrega confiável no TCP (confirmações e janela deslizante)", discipline: "Redes" }],
+        pesquisado: false,
+        fontes: [],
+        motivo: "Não consegui pesquisar esse assunto agora. Tente de novo em instantes.",
+      },
+    }),
+  );
+  await entrar(page);
+  await escrever(page, "árvore B");
+  await expect(page.getByText(/Não consegui pesquisar esse assunto agora/)).toBeVisible();
+  await expect(page.getByRole("button", { name: /Entrega confiável no TCP/ })).toBeVisible();
+});

@@ -441,6 +441,17 @@ html {
   font-weight: 600;
 }
 
+.fontes {
+  margin: var(--e2) 0 0;
+  font-size: 1rem;
+  display: grid;
+  gap: var(--e1);
+}
+
+.fontes a {
+  overflow-wrap: anywhere;
+}
+
 .lista-limites,
 .lista-correspondencia {
   margin: 0;

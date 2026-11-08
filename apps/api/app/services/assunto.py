@@ -25,8 +25,7 @@ VAZIAS = {
     "a", "o", "as", "os", "um", "uma", "de", "da", "do", "das", "dos", "e", "em",
     "no", "na", "nos", "nas", "por", "para", "pra", "com", "sem", "que", "como",
     "funciona", "funcionam", "quero", "queria", "entender", "aprender", "estudar",
-    "explica", "explique", "explicar", "me", "sobre", "o", "qual", "quais", "e",
-    "ser", "sao", "isso", "assunto", "conteudo", "materia", "coisa", "tipo",
+    "explica", "explique", "explicar", "me", "sobre", "qual", "quais", "ser", "sao", "isso", "assunto", "conteudo", "materia", "coisa", "tipo",
 }
 
 

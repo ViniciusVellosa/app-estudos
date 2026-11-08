@@ -29,16 +29,26 @@ def test_assunto_fora_da_biblioteca_nao_e_forcado(texto):
     assert [c.slug for c in r.sugestoes] == [TCP]
 
 
-def test_rota_reconhece_sem_sessao(client):
-    r = client.post("/v1/assuntos/reconhecer", json={"texto": "janela deslizante"})
+def test_rota_reconhece_o_assunto(client, auth):
+    r = client.post("/v1/assuntos/reconhecer", json={"texto": "janela deslizante"}, headers=auth)
     assert r.status_code == 200
     body = r.json()
     assert body["encontrado"] is True
     assert body["conceito"]["slug"] == TCP
 
 
-def test_rota_assunto_desconhecido_traz_sugestoes(client):
-    body = client.post("/v1/assuntos/reconhecer", json={"texto": "fotossíntese"}).json()
+def test_rota_assunto_desconhecido_traz_sugestoes(client, auth):
+    body = client.post("/v1/assuntos/reconhecer", json={"texto": "fotossíntese"}, headers=auth).json()
     assert body["encontrado"] is False
     assert body["conceito"] is None
     assert body["sugestoes"][0]["slug"] == TCP
+
+
+def test_rota_exige_consentimento(client):
+    token = client.post("/v1/session").json()["token"]
+    r = client.post(
+        "/v1/assuntos/reconhecer",
+        json={"texto": "tcp"},
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    assert r.status_code == 403

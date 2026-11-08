@@ -2,6 +2,7 @@
 
     uv run python -m app.smoke
     uv run python -m app.smoke tcp-entrega-confiavel "one piece"
+    uv run python -m app.smoke --pesquisa "árvore B" "one piece"
 
 Em Docker: docker compose exec api python -m app.smoke
 
@@ -23,7 +24,32 @@ from app.services.explanations import generate_validated
 from app.services.verification import LlmSelfVerifier
 
 
+def pesquisa(argv: list[str]) -> int:
+    """Pesquisa um assunto na web (D8) e, se der certo, gera a explicação."""
+    from app.services.pesquisa import Concept, GeminiPesquisador, PesquisaError
+
+    settings = get_settings()
+    assunto = argv[0] if argv else "árvore B"
+    interesse = argv[1] if len(argv) > 1 else "futebol"
+    print(f"pesquisa ............ {settings.pesquisa_provider or '(DESLIGADA: defina PESQUISA_PROVIDER=gemini)'}")
+    print(f"modelo .............. {settings.pesquisa_model or settings.llm_model or '(VAZIO)'}")
+    print(f"chave ............... {'definida' if settings.llm_api_key else 'VAZIA'}")
+    try:
+        r = GeminiPesquisador(settings).pesquisar(assunto)
+    except PesquisaError as exc:
+        print(f"\nERRO na pesquisa: {exc}")
+        return 1
+    print(f"\ntítulo: {r.titulo}\ntermos: {', '.join(r.termos)}\nfontes:")
+    for f in r.fontes:
+        print(f"  - {f.titulo}: {f.url}")
+    print(f"\n{r.texto}\n")
+    conceito = Concept(slug="web-teste", title=r.titulo, discipline="", base_text=r.texto, key_terms=r.termos)
+    return explica(settings, conceito, interesse)
+
+
 def main(argv: list[str]) -> int:
+    if argv[:1] == ["--pesquisa"]:
+        return pesquisa(argv[1:])
     settings = get_settings()
     slug = argv[0] if argv else "tcp-entrega-confiavel"
     interesse = argv[1] if len(argv) > 1 else "futebol"
@@ -49,7 +75,10 @@ def main(argv: list[str]) -> int:
     if concept is None:
         print(f"ERRO: conceito '{slug}' não existe em content/concepts/.")
         return 1
+    return explica(settings, concept, interesse)
 
+
+def explica(settings, concept, interesse: str) -> int:
     from app.providers.llm import build_llm_generator
 
     try:

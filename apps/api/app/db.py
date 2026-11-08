@@ -5,7 +5,7 @@ Em Docker usamos PostgreSQL; nos testes, SQLite em memória.
 from collections.abc import Iterator
 from datetime import UTC, datetime
 
-from sqlalchemy import JSON, ForeignKey, String, create_engine
+from sqlalchemy import JSON, ForeignKey, String, Text, create_engine
 from sqlalchemy.orm import (
     DeclarativeBase,
     Mapped,
@@ -68,6 +68,27 @@ class Explanation(Base):
     # | rejected = reprovada na revisao manual. So os dois primeiros sao servidos.
     status: Mapped[str] = mapped_column(String(20))
     payload: Mapped[dict] = mapped_column(JSON)
+    created_at: Mapped[datetime] = mapped_column(default=utcnow)
+
+
+class Pesquisa(Base):
+    """Texto de referência montado pela IA a partir de uma pesquisa na web (D8).
+
+    É o "texto-base" de um assunto que não está na biblioteca. Fica guardado
+    para que o próximo aluno que pedir o mesmo assunto não dispare outra
+    pesquisa, e para que explicações e perguntas sejam conferidas contra o
+    mesmo texto. Não guarda nada de quem pediu.
+    """
+
+    __tablename__ = "pesquisas"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    slug: Mapped[str] = mapped_column(String(80), unique=True, index=True)
+    assunto: Mapped[str] = mapped_column(String(200), index=True)  # normalizado
+    titulo: Mapped[str] = mapped_column(String(200))
+    texto_base: Mapped[str] = mapped_column(Text)
+    termos: Mapped[list] = mapped_column(JSON, default=list)
+    fontes: Mapped[list] = mapped_column(JSON, default=list)
+    modelo: Mapped[str] = mapped_column(String(80))
     created_at: Mapped[datetime] = mapped_column(default=utcnow)
 
 

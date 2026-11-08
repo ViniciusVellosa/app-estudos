@@ -107,3 +107,21 @@ estado de espera em mensagem própria, sem travar a leitura do que já chegou.
 - OWASP. **Top 10 for LLM Applications**, 2025 — LLM09 (desinformação).
 - ADR 0002 deste repositório, itens 1 a 3 (texto-base como fonte de verdade,
   gerador com duas implementações, validadores determinísticos).
+
+
+## Atualização (07/11/2026): pesquisa na web como referência (D8)
+
+O texto-base deixou de vir só da biblioteca. Para assuntos fora dela, a IA
+pesquisa na web (Gemini com a ferramenta Google Search) e escreve um texto de
+referência com as fontes encontradas, guardado na tabela `pesquisas`. A
+autoverificação e os validadores passam a conferir a explicação contra esse
+texto.
+
+- (+) O aluno pode pedir qualquer assunto técnico, sem conteúdo pré-gravado.
+- (+) A referência vem de fora do modelo e as fontes ficam visíveis para o aluno.
+- (−) O texto de referência é escrito pela própria IA a partir das fontes: um
+  erro de leitura dela passa para a referência. Mitigação: só há referência
+  com pelo menos uma fonte, o aluno vê as fontes, e "Está errada" tira a
+  explicação de circulação.
+- (−) Cada assunto novo custa uma pesquisa (cota da API). Mitigação: a
+  pesquisa é guardada e reaproveitada para o mesmo assunto.

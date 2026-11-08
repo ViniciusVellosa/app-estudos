@@ -43,6 +43,15 @@ async def lifespan(app: FastAPI):
         except GenerationError as exc:
             # o app continua funcionando só com conteúdo curado
             log.error("IA desativada: %s", exc)
+    app.state.pesquisador = None
+    if settings.explanation_provider == "llm" and settings.pesquisa_provider == "gemini":
+        from app.services.pesquisa import GeminiPesquisador, PesquisaError
+
+        try:
+            app.state.pesquisador = GeminiPesquisador(settings)
+            log.info("pesquisa na web ativa (%s)", app.state.pesquisador.name)
+        except PesquisaError as exc:
+            log.error("pesquisa na web desativada: %s", exc)
     yield
 
 

@@ -1,3 +1,5 @@
+import logging
+
 from fastapi import APIRouter, HTTPException, Request, Response, status
 from sqlalchemy import select
 
@@ -11,14 +13,24 @@ from app.schemas import (
     ExplanationOut,
     ExplanationRequest,
     FeedbackIn,
+    FonteOut,
     NeutralOut,
     QuestionIn,
     QuestionOut,
 )
 from app.security import ConsentedUser, CurrentUser, DbDep
-from app.services.explanations import get_explanation, universe_terms_for
 from app.services.assunto import reconhece
+from app.services.explanations import get_explanation, universe_terms_for
+from app.services.pesquisa import (
+    AssuntoRecusado,
+    PesquisaError,
+    fontes_do_conceito,
+    obter_conceito,
+    pesquisar_assunto,
+)
 from app.services.questions import answer_question
+
+log = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/v1", tags=["conteúdo"])
 
@@ -36,22 +48,53 @@ def _concept_out(c) -> ConceptOut:
 
 
 @router.post("/assuntos/reconhecer", response_model=AssuntoOut)
-def recognize_subject(body: AssuntoIn):
-    """O aluno digita o assunto no chat; devolve o conteúdo da biblioteca (D7).
+def recognize_subject(body: AssuntoIn, request: Request, user: ConsentedUser, db: DbDep):
+    """O aluno digita o assunto no chat (D7).
 
-    Sem sessão nem gravação: o texto é usado só para o casamento.
+    1. Se o assunto está na biblioteca, usa o conteúdo revisado.
+    2. Senão, e com a pesquisa ativa, a IA pesquisa na web e monta um texto de
+       referência com fontes (D8). A pesquisa fica guardada para reuso.
+    3. Sem pesquisa, diz que ainda não há material e sugere o que existe.
+
+    O texto do aluno não é guardado como foi escrito, nem ligado a quem pediu.
     """
     r = reconhece(body.texto)
+    sugestoes = [_concept_out(c) for c in r.sugestoes]
+    if r.conceito is not None:
+        return AssuntoOut(encontrado=True, conceito=_concept_out(r.conceito), sugestoes=sugestoes)
+
+    pesquisador = getattr(request.app.state, "pesquisador", None)
+    if pesquisador is None:
+        return AssuntoOut(encontrado=False, conceito=None, sugestoes=sugestoes)
+    try:
+        p = pesquisar_assunto(db, body.texto, pesquisador)
+    except AssuntoRecusado as exc:
+        return AssuntoOut(encontrado=False, conceito=None, sugestoes=sugestoes, motivo=str(exc))
+    except PesquisaError as exc:
+        log.warning("pesquisa falhou: %s", exc)
+        return AssuntoOut(
+            encontrado=False,
+            conceito=None,
+            sugestoes=sugestoes,
+            motivo="Não consegui pesquisar esse assunto agora. Tente de novo em instantes.",
+        )
     return AssuntoOut(
-        encontrado=r.conceito is not None,
-        conceito=_concept_out(r.conceito) if r.conceito else None,
-        sugestoes=[_concept_out(c) for c in r.sugestoes],
+        encontrado=True,
+        conceito=ConceptOut(slug=p.slug, title=p.titulo, discipline="Pesquisado na web"),
+        sugestoes=sugestoes,
+        pesquisado=True,
+        fontes=[FonteOut(**f) for f in p.fontes],
     )
 
 
+@router.get("/concepts/{slug}/fontes", response_model=list[FonteOut])
+def concept_sources(slug: str, db: DbDep):
+    return [FonteOut(titulo=f.titulo, url=f.url) for f in fontes_do_conceito(db, slug)]
+
+
 @router.get("/concepts/{slug}/neutral", response_model=NeutralOut)
-def neutral_explanation(slug: str):
-    concept = load_concepts().get(slug)
+def neutral_explanation(slug: str, db: DbDep):
+    concept = obter_conceito(db, slug)
     if concept is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Conteúdo não encontrado.")
     return NeutralOut(slug=concept.slug, title=concept.title, base_text=concept.base_text)
@@ -64,7 +107,7 @@ def request_explanation(
     user: ConsentedUser,
     db: DbDep,
 ):
-    concept = load_concepts().get(body.concept_slug)
+    concept = obter_conceito(db, body.concept_slug)
     if concept is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Conteúdo não encontrado.")
     interest = db.scalar(
@@ -98,7 +141,7 @@ def ask_question(
     A pergunta não é gravada. Quem decide se ela é do assunto é um porteiro
     determinístico, antes de qualquer chamada de IA.
     """
-    concept = load_concepts().get(slug)
+    concept = obter_conceito(db, slug)
     if concept is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Conteúdo não encontrado.")
 

@@ -135,7 +135,17 @@ class AssuntoIn(BaseModel):
     texto: str = Field(min_length=1, max_length=200)
 
 
+class FonteOut(BaseModel):
+    titulo: str
+    url: str
+
+
 class AssuntoOut(BaseModel):
     encontrado: bool
     conceito: ConceptOut | None
     sugestoes: list[ConceptOut]
+    # Preenchidos quando o assunto veio de pesquisa na web (D8)
+    pesquisado: bool = False
+    fontes: list[FonteOut] = []
+    # Por que não foi possível usar o assunto, em linguagem do aluno
+    motivo: str | None = None

@@ -57,6 +57,7 @@ Cenário: explicação reprovada na verificação
 | D5 | O chat **aceita texto livre, mas responde só dentro do conceito** escolhido; fora dele, recusa com educação e oferece opções | RF11 (novo), RNF04 |
 | D6 | Não há revisão humana: a **própria IA verifica a resposta antes de exibi-la** (autoverificação), seguida dos validadores automáticos | RNF04, RF03, RF11 |
 | D7 | **Tudo dentro do chat**: o aluno escreve o assunto e o universo com as próprias palavras; o assunto é reconhecido na biblioteca de conteúdos (com material de referência) e, fora dela, o app diz que ainda não tem material e sugere o que tem | RF02, RF03, RF10, RNF04 |
+| D8 | **Pesquisa na web**: assunto fora da biblioteca é pesquisado pela API do Gemini (Google Search); a IA monta um texto de referência com fontes, guardado para reuso, e a explicação é gerada e autoverificada contra ele. O aluno vê as fontes antes da explicação | RF03, RNF04, D6, D7 |
 
 ### Cuidados de acessibilidade para a interface de chat (Lumen)
 - Histórico de mensagens com `role="log"` (anúncio educado ao leitor de tela); anunciar a mensagem pronta, não cada pedaço do texto enquanto é gerado (WCAG 4.1.3).
@@ -99,6 +100,7 @@ Fluxo, baseado no Chain-of-Verification (Dhuliawala et al., 2024):
 Limite conhecido: um modelo verificando a si mesmo reduz erros, mas não os elimina; sem informação externa, a autocorreção pode até piorar o resultado (Huang et al., 2024). Mitigações:
 - usar como referência uma fonte técnica fixa por conceito (ex.: trecho do livro ou dos slides da disciplina) na etapa 3;
 - manter o botão "Está errada" (RF05) e registrar os casos;
+- para assuntos fora da biblioteca, a referência vem de pesquisa na web com fontes exibidas ao aluno (D8);
 - medir no teste de usabilidade quantas explicações tinham erro.
 
 Referências: DHULIAWALA, S. et al. Chain-of-Verification Reduces Hallucination in Large Language Models. Findings of ACL, 2024. HUANG, J. et al. Large Language Models Cannot Self-Correct Reasoning Yet. ICLR, 2024.

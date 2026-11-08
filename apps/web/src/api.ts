@@ -34,7 +34,16 @@ export type Question = {
   trechos: string[];
   concept_title: string;
 };
-export type Assunto = { encontrado: boolean; conceito: Concept | null; sugestoes: Concept[] };
+export type Fonte = { titulo: string; url: string };
+export type Assunto = {
+  encontrado: boolean;
+  conceito: Concept | null;
+  sugestoes: Concept[];
+  /** true quando o assunto veio de pesquisa na web (D8) */
+  pesquisado: boolean;
+  fontes: Fonte[];
+  motivo: string | null;
+};
 export type ReadingPrefs = {
   font_scale: number;
   theme: "claro" | "escuro" | "alto-contraste" | "sistema";
