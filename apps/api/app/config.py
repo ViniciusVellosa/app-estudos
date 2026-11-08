@@ -49,6 +49,9 @@ class Settings(BaseSettings):
     # usa a ferramenta google_search da API do Gemini, com a mesma chave
     # LLM_API_KEY. Vazio = só a biblioteca de conteúdos.
     pesquisa_provider: Literal["", "gemini"] = ""
+    # Perguntas de checagem por explicação na autoverificação (D6). Cada uma
+    # é uma chamada a mais ao modelo; 1 economiza cota (ver verification.py).
+    autoverificacao_perguntas: int = Field(default=1, ge=1, le=6)
     pesquisa_model: str = ""  # vazio = o mesmo LLM_MODEL
 
     consent_version: str = "2026-1"

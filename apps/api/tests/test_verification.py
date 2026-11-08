@@ -140,6 +140,17 @@ def test_limita_o_numero_de_perguntas_de_checagem(conceito):
     assert len(chat.mensagens) == 5
 
 
+def test_padrao_e_uma_pergunta_para_poupar_cota(conceito):
+    """Padrão: 1 (perguntas) + 1 (resposta) + 1 (veredito) = 3 chamadas."""
+    chat = FakeChat(
+        perguntas=[f"p{i}" for i in range(6)], veredito=VerdictOut(aprovada=True)
+    )
+    LlmSelfVerifier(chat).verify("rascunho", conceito)
+    assert len(chat.mensagens) == 3
+    # a pergunta que fica é a primeira, a mais arriscada segundo o prompt
+    assert "p0" in chat.mensagens[1]
+
+
 def test_falha_da_ia_na_verificacao_reprova(conceito):
     """Falha fechada: sem conseguir verificar, não se exibe (RNF04)."""
     chat = FakeChat(

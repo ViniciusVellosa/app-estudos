@@ -125,3 +125,18 @@ texto.
   explicação de circulação.
 - (−) Cada assunto novo custa uma pesquisa (cota da API). Mitigação: a
   pesquisa é guardada e reaproveitada para o mesmo assunto.
+
+
+## Atualização (07/11/2026): uma pergunta de checagem por padrão
+
+No plano gratuito do Gemini, a cota da chave acabou em poucos testes: cada
+explicação gastava até cerca de 12 chamadas (5 de verificação por tentativa,
+até 2 tentativas, mais o rascunho). O teto de perguntas de checagem caiu de 3
+para 1 (`AUTOVERIFICACAO_PERGUNTAS`, de 1 a 6), e a verificação passa a custar
+3 chamadas: perguntas, uma resposta independente e o veredito.
+
+- (+) Quase metade das chamadas por explicação.
+- (−) Menos afirmações conferidas uma a uma. Mitigação: a pergunta que fica é a
+  mais arriscada (o prompt ordena por risco, priorizando o mecanismo), e o
+  veredito continua comparando o rascunho inteiro com o texto-base.
+- Com cota disponível (plano pago), voltar a 3 é só mudar a variável.

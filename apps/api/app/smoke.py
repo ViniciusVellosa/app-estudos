@@ -89,7 +89,7 @@ def explica(settings, concept, interesse: str) -> int:
 
     print(f"pedindo '{concept.title}' com o universo '{interesse}'…")
     dados = ExplanationRequestData(concept, interesse, 2, "iniciante")
-    resultado, erros = generate_validated(generator, dados, LlmSelfVerifier(generator))
+    resultado, erros = generate_validated(generator, dados, LlmSelfVerifier(generator, max_perguntas=settings.autoverificacao_perguntas))
 
     if isinstance(resultado, Refusal):
         print(f"\nO modelo RECUSOU, o que é um resultado válido: {resultado.motivo}")

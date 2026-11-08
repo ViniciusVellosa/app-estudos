@@ -91,7 +91,7 @@ Termo técnico: **autoverificação** ou **autocrítica** (*self-verification*),
 
 Fluxo, baseado no Chain-of-Verification (Dhuliawala et al., 2024):
 1. **Rascunho:** a IA gera a explicação (analogia e versão técnica) ou a resposta da pergunta.
-2. **Perguntas de checagem:** a IA lista as afirmações técnicas do rascunho e cria uma pergunta de verificação para cada uma (ex.: "o TCP retransmite quando o ACK não chega?").
+2. **Perguntas de checagem:** a IA lista as afirmações técnicas do rascunho e cria perguntas de verificação ordenadas da mais arriscada para a menos (ex.: "o TCP retransmite quando o ACK não chega?"). Só a primeira é checada por padrão, para poupar cota da IA (`AUTOVERIFICACAO_PERGUNTAS=1`; ver ADR 0003).
 3. **Respostas independentes:** responde cada pergunta numa chamada separada, **sem ver o rascunho**, para não repetir o próprio erro.
 4. **Veredito:** compara as respostas com o rascunho e também confere se a analogia não contradiz a versão técnica e se os fatos do universo (personagens, regras do jogo) estão corretos. Saída estruturada: `aprovada` ou `reprovada` + motivos.
 5. **Validadores automáticos** (`validators/grounding.py`) continuam valendo depois disso.

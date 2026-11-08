@@ -39,9 +39,16 @@ log = logging.getLogger(__name__)
 
 PROMPT_PATH = Path(__file__).resolve().parent.parent / "prompts" / "verificacao_sistema.md"
 
-# Teto de perguntas de checagem: com 3, a verificação custa 5 chamadas ao
-# modelo (1 + 3 + 1). Subir isso melhora pouco e multiplica custo e espera.
-MAX_PERGUNTAS = 3
+# Teto de perguntas de checagem. Com 1, a verificação custa 3 chamadas ao
+# modelo (perguntas + 1 resposta + veredito); com 3, custava 5.
+#
+# Reduzido de 3 para 1 em 07/11/2026: no plano gratuito do Gemini, cada
+# explicação gastava até ~12 chamadas (duas tentativas) e a cota acabava em
+# poucos testes. A pergunta que fica é a primeira, e o prompt pede as
+# perguntas "da mais arriscada para a menos": é a que checa o mecanismo, onde
+# a analogia costuma trair o conceito. O veredito continua lendo o texto-base
+# inteiro. Ajuste com AUTOVERIFICACAO_PERGUNTAS (1 a 6).
+MAX_PERGUNTAS = 1
 
 # O que o modelo responde quando o texto-base não cobre a pergunta.
 NAO_CONSTA = "NAO_CONSTA"

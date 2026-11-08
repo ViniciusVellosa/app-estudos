@@ -38,7 +38,9 @@ async def lifespan(app: FastAPI):
             app.state.generator = generator
             # O gerador também implementa StructuredChat: a autoverificação
             # reaproveita cliente, chave e tempo limite já configurados.
-            app.state.verifier = LlmSelfVerifier(generator)
+            app.state.verifier = LlmSelfVerifier(
+                generator, max_perguntas=settings.autoverificacao_perguntas
+            )
             log.info("IA ativa (%s) com autoverificação", generator.name)
         except GenerationError as exc:
             # o app continua funcionando só com conteúdo curado
