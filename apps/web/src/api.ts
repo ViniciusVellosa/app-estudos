@@ -34,6 +34,7 @@ export type Question = {
   trechos: string[];
   concept_title: string;
 };
+export type Assunto = { encontrado: boolean; conceito: Concept | null; sugestoes: Concept[] };
 export type ReadingPrefs = {
   font_scale: number;
   theme: "claro" | "escuro" | "alto-contraste" | "sistema";
@@ -102,6 +103,9 @@ export const api = {
     call<Interest>("/v1/me/interests", { method: "POST", body: JSON.stringify({ label, depth }) }),
   removeInterest: (id: number) => call<void>(`/v1/me/interests/${id}`, { method: "DELETE" }),
   concepts: () => call<Concept[]>("/v1/concepts"),
+  // O texto digitado não é gravado: só serve para achar o conteúdo (D7)
+  reconhecerAssunto: (texto: string) =>
+    call<Assunto>("/v1/assuntos/reconhecer", { method: "POST", body: JSON.stringify({ texto }) }),
   explain: (concept_slug: string, interest_id: number) =>
     call<Explanation>("/v1/explanations", {
       method: "POST",

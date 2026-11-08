@@ -4,6 +4,7 @@ title: Entrega confiável no TCP (confirmações e janela deslizante)
 discipline: Redes de Computadores
 reviewed_by: "PREENCHER: nome de quem revisou"
 reviewed_at: "PREENCHER: data"
+aliases: [tcp, protocolo tcp, entrega confiável, transmissão confiável, janela deslizante, confirmação, confirmações, ack, retransmissão, número de sequência, controle de erros, camada de transporte]
 key_terms: [segmento, confirmação, ACK, janela, número de sequência, retransmissão]
 # Armadilhas: frases que descrevem o protocolo "pare-e-espere", não o TCP.
 # Os padrões são aplicados ao texto normalizado (minúsculas, sem acentos).

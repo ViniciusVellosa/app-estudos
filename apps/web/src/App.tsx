@@ -10,12 +10,11 @@ import {
 } from "./api";
 import { Chat } from "./chat/Chat";
 
-type Screen = "carregando" | "consentimento" | "interesses" | "estudar" | "preferencias" | "meus-dados";
+type Screen = "carregando" | "consentimento" | "estudar" | "preferencias" | "meus-dados";
 
 const TITLES: Record<Screen, string> = {
   carregando: "Carregando",
   consentimento: "Antes de começar",
-  interesses: "Seus interesses",
   estudar: "Estudar",
   preferencias: "Preferências de leitura",
   "meus-dados": "Meus dados",
@@ -28,6 +27,7 @@ function applyPrefs(p: ReadingPrefs) {
   root.style.setProperty("--font-scale", String(p.font_scale));
   root.dataset.theme = p.theme;
   root.dataset.reducedMotion = String(p.reduced_motion);
+  root.dataset.ampliado = String(p.font_scale >= 1.5);
 }
 
 export default function App() {
@@ -37,6 +37,7 @@ export default function App() {
   const [interests, setInterests] = useState<Interest[]>([]);
   const [concepts, setConcepts] = useState<Concept[]>([]);
   const [prefs, setPrefs] = useState<ReadingPrefs>(DEFAULT_PREFS);
+  const [conversa, setConversa] = useState(0); // muda a chave = nova conversa
   const titleRef = useRef<HTMLHeadingElement>(null);
   const firstScreenShown = useRef(false);
 
@@ -61,7 +62,7 @@ export default function App() {
         try {
           const list = await api.interests();
           setInterests(list);
-          setScreen(list.length ? "estudar" : "interesses");
+          setScreen("estudar");
         } catch (e) {
           if (e instanceof ApiError && e.status === 403) setScreen("consentimento");
           else throw e;
@@ -88,22 +89,38 @@ export default function App() {
       <a className="pular botao" href="#conteudo">Pular para o conteúdo</a>
       <header className="topo">
         <div className="topo-conteudo">
-          <p><strong>Estudos do Seu Jeito</strong></p>
-          {interests.length > 0 && (
+          <p className="marca">Estudos do Seu Jeito</p>
+          {screen !== "carregando" && screen !== "consentimento" && (
             <nav aria-label="Principal">
-              <div className="acoes">
-                <button type="button" className="secundario" aria-current={screen === "estudar" ? "page" : undefined} onClick={() => go("estudar")}>Estudar</button>
-                <button type="button" className="secundario" aria-current={screen === "interesses" ? "page" : undefined} onClick={() => go("interesses")}>Interesses</button>
-                <button type="button" className="secundario" aria-current={screen === "preferencias" ? "page" : undefined} onClick={() => go("preferencias")}>Leitura</button>
-                <button type="button" className="secundario" aria-current={screen === "meus-dados" ? "page" : undefined} onClick={() => go("meus-dados")}>Meus dados</button>
-              </div>
+              {screen === "estudar" ? (
+                <button
+                  type="button"
+                  className="texto"
+                  onClick={() => {
+                    setConversa((n) => n + 1);
+                    setStatus("Nova conversa.");
+                  }}
+                >
+                  Nova conversa
+                </button>
+              ) : (
+                <button type="button" className="texto" onClick={() => go("estudar")}>
+                  Voltar para a conversa
+                </button>
+              )}
+              <button type="button" className="texto" aria-current={screen === "preferencias" ? "page" : undefined} onClick={() => go("preferencias")}>Leitura</button>
+              <button type="button" className="texto" aria-current={screen === "meus-dados" ? "page" : undefined} onClick={() => go("meus-dados")}>Meus dados</button>
             </nav>
           )}
         </div>
       </header>
 
       <main id="conteudo">
-        <h1 ref={titleRef} tabIndex={-1}>{TITLES[screen]}</h1>
+        {/* Na conversa o título fica só para leitor de tela: num chat, o
+            espaço do topo é da conversa (padrão dos chats de IA). */}
+        <h1 ref={titleRef} tabIndex={-1} className={screen === "estudar" ? "visualmente-oculto" : undefined}>
+          {TITLES[screen]}
+        </h1>
         {/* Região viva: anuncia resultados sem mover o foco (WCAG 4.1.3).
             Na conversa ela fica só para leitor de tela: a própria mensagem
             que chegou já é a confirmação visual, e repetir "parte 3 de 6"
@@ -121,28 +138,19 @@ export default function App() {
           <Consent
             onAccept={async () => {
               await api.consent(true);
-              go("interesses");
+              setInterests(await api.interests());
+              go("estudar");
             }}
           />
         )}
-        {screen === "interesses" && (
-          <Interests
-            interests={interests}
-            onChange={setInterests}
-            onDone={() => go("estudar")}
-            setStatus={setStatus}
-            setError={setError}
-          />
-        )}
-        {/* A conversa fica montada e apenas escondida nas outras telas.
-            Desmontar apagaria o histórico, e a tarefa T4 do teste de
-            usabilidade pede justamente que a pessoa vá ajustar a leitura no
-            meio da explicação: voltar e encontrar a conversa vazia seria um
-            problema sério. `hidden` tira o conteúdo da árvore de
-            acessibilidade, então nada escondido é lido ou tabulável. */}
-        {interests.length > 0 && (
+        {/* A conversa fica montada e só escondida nas outras telas: a tarefa
+            T4 pede ajustar a leitura no meio da explicação, e voltar para uma
+            conversa vazia seria um problema sério. `hidden` tira o conteúdo
+            da árvore de acessibilidade. */}
+        {screen !== "carregando" && screen !== "consentimento" && (
           <div hidden={screen !== "estudar"}>
             <Chat
+              key={conversa}
               concepts={concepts}
               interests={interests}
               onInteresses={setInterests}
@@ -161,7 +169,7 @@ export default function App() {
             }}
           />
         )}
-        {screen === "meus-dados" && <MyData setStatus={setStatus} />}
+        {screen === "meus-dados" && <MyData setStatus={setStatus} interests={interests} onChange={setInterests} />}
       </main>
     </>
   );
@@ -186,97 +194,6 @@ function Consent({ onAccept }: { onAccept: () => Promise<void> }) {
         <button type="button" disabled={!checked} onClick={onAccept}>Continuar</button>
       </div>
     </section>
-  );
-}
-
-function Interests(props: {
-  interests: Interest[];
-  onChange: (i: Interest[]) => void;
-  onDone: () => void;
-  setStatus: (s: string) => void;
-  setError: (s: string) => void;
-}) {
-  const [label, setLabel] = useState("");
-  const [depth, setDepth] = useState(2);
-  const [fieldError, setFieldError] = useState("");
-
-  async function add(e: React.FormEvent) {
-    e.preventDefault();
-    if (label.trim().length < 2) {
-      setFieldError("Escreva um interesse com pelo menos 2 letras, por exemplo: futebol.");
-      return;
-    }
-    setFieldError("");
-    try {
-      const created = await api.addInterest(label.trim(), depth);
-      props.onChange([...props.interests, created]);
-      props.setStatus(`Interesse “${created.label}” adicionado.`);
-      setLabel("");
-    } catch (err) {
-      props.setError(err instanceof Error ? err.message : "Não foi possível salvar.");
-    }
-  }
-
-  async function remove(i: Interest) {
-    await api.removeInterest(i.id);
-    props.onChange(props.interests.filter((x) => x.id !== i.id));
-    props.setStatus(`Interesse “${i.label}” removido.`);
-  }
-
-  return (
-    <>
-      <p>Conte do que você gosta. Vamos usar isso para criar comparações nas explicações.</p>
-      <form onSubmit={add} noValidate>
-        <label htmlFor="interesse">Interesse (jogo, série, esporte, música…)</label>
-        <p id="interesse-dica" className="dica">Evite informar religião, saúde, política ou outros dados sensíveis.</p>
-        <input
-          id="interesse"
-          type="text"
-          value={label}
-          maxLength={60}
-          autoComplete="off"
-          aria-describedby={fieldError ? "interesse-dica interesse-erro" : "interesse-dica"}
-          aria-invalid={fieldError ? true : undefined}
-          onChange={(e) => setLabel(e.target.value)}
-        />
-        {fieldError && <p id="interesse-erro" className="erro">{fieldError}</p>}
-        <fieldset>
-          <legend>Quanto você conhece desse assunto?</legend>
-          {[
-            [1, "Conheço pouco"],
-            [2, "Conheço bem"],
-            [3, "Sou fã e conheço os detalhes"],
-          ].map(([value, text]) => (
-            <label key={value}>
-              <input type="radio" name="profundidade" checked={depth === value} onChange={() => setDepth(value as number)} />
-              {text}
-            </label>
-          ))}
-        </fieldset>
-        <div className="acoes">
-          <button type="submit">Adicionar interesse</button>
-        </div>
-      </form>
-
-      {props.interests.length > 0 && (
-        <>
-          <h2>Seus interesses</h2>
-          <ul>
-            {props.interests.map((i) => (
-              <li key={i.id}>
-                {i.label}{" "}
-                <button type="button" className="perigo" onClick={() => remove(i)} aria-label={`Remover ${i.label}`}>
-                  Remover
-                </button>
-              </li>
-            ))}
-          </ul>
-          <div className="acoes">
-            <button type="button" onClick={props.onDone}>Começar a estudar</button>
-          </div>
-        </>
-      )}
-    </>
   );
 }
 
@@ -329,12 +246,45 @@ function Prefs({ prefs, onSave }: { prefs: ReadingPrefs; onSave: (p: ReadingPref
   );
 }
 
-function MyData({ setStatus }: { setStatus: (s: string) => void }) {
+function MyData({
+  setStatus,
+  interests,
+  onChange,
+}: {
+  setStatus: (s: string) => void;
+  interests: Interest[];
+  onChange: (i: Interest[]) => void;
+}) {
   const [data, setData] = useState<string>("");
   const [confirming, setConfirming] = useState(false);
   return (
     <>
       <p>Você pode ver tudo o que guardamos sobre você e apagar seus dados quando quiser.</p>
+      <h2>Universos que você usou</h2>
+      {interests.length === 0 ? (
+        <p className="dica">Nenhum ainda. Eles são guardados quando você escolhe um universo na conversa.</p>
+      ) : (
+        <ul className="lista-universos">
+          {interests.map((i) => (
+            <li key={i.id}>
+              {i.label}{" "}
+              <button
+                type="button"
+                className="perigo"
+                aria-label={`Remover ${i.label}`}
+                onClick={async () => {
+                  await api.removeInterest(i.id);
+                  onChange(interests.filter((x) => x.id !== i.id));
+                  setStatus(`Universo “${i.label}” removido.`);
+                }}
+              >
+                Remover
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+      <h2>Todos os dados</h2>
       <div className="acoes">
         <button
           type="button"

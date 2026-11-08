@@ -76,18 +76,24 @@ test("a resposta da pergunta de transferência não aparece junto com ela (DD08)
   await expect(resposta).toBeVisible();
 });
 
-test("a folha de troca de universo fecha com Esc e devolve o foco (DD16)", async ({ page }) => {
+test("o universo em uso é dito em texto, não só por cor (DD13)", async ({ page }) => {
   await entrar(page);
   await pedirExplicacao(page);
+  await expect(page.getByText("Estudando:", { exact: false })).toHaveCount(1);
+  await expect(page.locator(".conversa-contexto")).toContainText("futebol");
+});
 
-  const abrir = page.getByRole("button", { name: "Trocar universo" });
-  await abrir.click();
-  await expect(page.getByRole("heading", { name: "Trocar de universo" })).toBeVisible();
-
-  await page.keyboard.press("Escape");
-  await expect(page.getByRole("heading", { name: "Trocar de universo" })).toHaveCount(0);
-  // o `<dialog>` nativo devolve o foco a quem o abriu (WCAG 2.4.3)
-  await expect(abrir).toBeFocused();
+test("o rodapé fixo não esconde o elemento focado (WCAG 2.4.11)", async ({ page, isMobile }) => {
+  test.skip(isMobile, "teste de teclado físico roda no projeto desktop");
+  await entrar(page);
+  await pedirExplicacao(page);
+  await avancarAte(page, 6);
+  // o último controle da conversa, levado ao foco pelo teclado
+  const resumo = page.getByText("Mostrar a resposta");
+  await resumo.focus();
+  const caixa = await resumo.boundingBox();
+  const rodape = await page.locator(".rodape-chat").boundingBox();
+  expect(caixa!.y + caixa!.height).toBeLessThanOrEqual(rodape!.y + 1);
 });
 
 test("alvos de clique têm pelo menos 24x24 px (WCAG 2.5.8)", async ({ page }) => {
@@ -106,7 +112,7 @@ test("a 320px com texto enorme, a conversa reflui sem rolagem lateral", async ({
   await page.getByLabel("Enorme").check();
   await page.getByLabel(/Alto contraste/).check();
   await page.getByRole("button", { name: "Salvar preferências" }).click();
-  await page.getByRole("button", { name: "Estudar" }).click();
+  await page.getByRole("button", { name: "Voltar para a conversa" }).click();
 
   await pedirExplicacao(page);
   await avancarAte(page, 3); // o passo 3 é a tabela, o pior caso para reflow
@@ -114,7 +120,7 @@ test("a 320px com texto enorme, a conversa reflui sem rolagem lateral", async ({
   await semViolacoes(page);
 
   await perguntar(page, "quem ganhou o jogo ontem?");
-  await expect(page.getByRole("heading", { name: "Fora deste conceito" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Fora deste conteúdo" })).toBeVisible();
   await semRolagemHorizontal(page);
   await alvosGrandesOSuficiente(page);
 });
@@ -130,7 +136,7 @@ test("dá para conversar só com o teclado", async ({ page, isMobile }) => {
   await expect(parte(page, 2)).toBeVisible();
 
   // perguntar sem tocar no mouse: o Enter no campo envia o formulário
-  await page.getByLabel("Sua pergunta sobre este conceito").focus();
+  await page.getByLabel("Sua pergunta sobre este conteúdo").focus();
   await page.keyboard.type("o que é a janela?");
   await page.keyboard.press("Enter");
   await expect(page.getByRole("heading", { name: "Resposta" })).toBeVisible();

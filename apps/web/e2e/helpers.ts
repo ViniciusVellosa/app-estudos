@@ -35,25 +35,26 @@ export async function alvosGrandesOSuficiente(page: Page) {
   expect(pequenos).toEqual([]);
 }
 
-/** Consentir, informar um universo e chegar à tela de estudo (tarefa T1). */
-export async function entrar(page: Page, universo = "futebol") {
+/** Consentir e chegar à conversa (início da tarefa T1). */
+export async function entrar(page: Page) {
   await page.goto("/");
   await page.getByLabel("Li e concordo").check();
   await page.getByRole("button", { name: "Continuar" }).click();
-  await page.getByLabel(/Interesse/).fill(universo);
-  await page.getByRole("button", { name: "Adicionar interesse" }).click();
-  await expect(page.getByRole("status")).toContainText("adicionado");
-  await page.getByRole("button", { name: "Começar a estudar" }).click();
+  await expect(page.getByText(/O que você quer entender hoje/)).toBeVisible();
 }
 
-/** Pedir a explicação e esperar a primeira mensagem do chat. */
-export async function pedirExplicacao(page: Page, conceito = TCP) {
-  // pelo nome, e não pela posição: a ordem da lista muda quando entram
-  // conceitos novos
-  // `exact` porque o título do cartão ("Qual conteúdo você quer entender?")
-  // também casaria por trecho
-  await page.getByLabel("Conteúdo", { exact: true }).selectOption({ label: conceito });
-  await page.getByRole("button", { name: "Começar a explicar" }).click();
+/** Escrever no campo da conversa e enviar com Enter, como num chat de IA. */
+export async function escrever(page: Page, texto: string) {
+  const campo = page.locator("#mensagem");
+  await campo.fill(texto);
+  await campo.press("Enter");
+}
+
+/** Pedir a explicação pelo chat: assunto e universo digitados (D7). */
+export async function pedirExplicacao(page: Page, assunto = "quero entender TCP", universo = "futebol") {
+  await escrever(page, assunto);
+  await expect(page.getByText(/Combinado, vamos estudar/)).toBeVisible();
+  await escrever(page, universo);
   await expect(parte(page, 1)).toBeVisible();
 }
 
@@ -69,7 +70,7 @@ export function parte(page: Page, n: number) {
 }
 
 /** `exact` porque o nome acessível casa por trecho, e a mensagem de recusa
- *  também tem um botão "Continuar este conceito". */
+ *  também tem um botão "Continuar este conteúdo". */
 export function botaoContinuar(page: Page) {
   return page.getByRole("button", { name: "Continuar", exact: true });
 }
@@ -82,6 +83,6 @@ export async function avancarAte(page: Page, ate: number) {
 }
 
 export async function perguntar(page: Page, texto: string) {
-  await page.getByLabel("Sua pergunta sobre este conceito").fill(texto);
+  await page.getByLabel("Sua pergunta sobre este conteúdo").fill(texto);
   await page.getByRole("button", { name: "Enviar" }).click();
 }

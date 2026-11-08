@@ -5,6 +5,8 @@ from app.config import get_settings
 from app.content import load_concepts
 from app.db import Explanation, Feedback, Interest
 from app.schemas import (
+    AssuntoIn,
+    AssuntoOut,
     ConceptOut,
     ExplanationOut,
     ExplanationRequest,
@@ -15,6 +17,7 @@ from app.schemas import (
 )
 from app.security import ConsentedUser, CurrentUser, DbDep
 from app.services.explanations import get_explanation, universe_terms_for
+from app.services.assunto import reconhece
 from app.services.questions import answer_question
 
 router = APIRouter(prefix="/v1", tags=["conteúdo"])
@@ -26,6 +29,24 @@ def list_concepts():
         ConceptOut(slug=c.slug, title=c.title, discipline=c.discipline)
         for c in load_concepts().values()
     ]
+
+
+def _concept_out(c) -> ConceptOut:
+    return ConceptOut(slug=c.slug, title=c.title, discipline=c.discipline)
+
+
+@router.post("/assuntos/reconhecer", response_model=AssuntoOut)
+def recognize_subject(body: AssuntoIn):
+    """O aluno digita o assunto no chat; devolve o conteúdo da biblioteca (D7).
+
+    Sem sessão nem gravação: o texto é usado só para o casamento.
+    """
+    r = reconhece(body.texto)
+    return AssuntoOut(
+        encontrado=r.conceito is not None,
+        conceito=_concept_out(r.conceito) if r.conceito else None,
+        sugestoes=[_concept_out(c) for c in r.sugestoes],
+    )
 
 
 @router.get("/concepts/{slug}/neutral", response_model=NeutralOut)

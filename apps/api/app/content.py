@@ -30,6 +30,9 @@ class Concept:
     base_text: str
     key_terms: list[str] = field(default_factory=list)
     forbidden_patterns: list[str] = field(default_factory=list)
+    # Outros nomes pelos quais um aluno pede este conteúdo no chat ("tcp",
+    # "janela deslizante"). Usados só para reconhecer o assunto digitado.
+    aliases: list[str] = field(default_factory=list)
 
     @property
     def rules(self) -> ConceptRules:
@@ -58,6 +61,7 @@ def load_concepts() -> dict[str, Concept]:
             base_text=match.group(2).strip(),
             key_terms=meta.get("key_terms", []),
             forbidden_patterns=meta.get("forbidden_patterns", []),
+            aliases=meta.get("aliases", []),
         )
         concepts[concept.slug] = concept
     return concepts

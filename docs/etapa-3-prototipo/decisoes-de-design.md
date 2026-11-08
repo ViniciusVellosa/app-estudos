@@ -48,7 +48,7 @@ modelo de interação diferente custaria aprendizado sem ganho.
 
 O risco dessa escolha é o oposto: **parecer um chat promete conversa livre**, e
 este app não entrega isso (DD05). A mitigação é dizer o limite **antes** do
-primeiro erro — na coluna lateral no desktop e no texto de abertura no celular
+primeiro erro — no aviso fixo abaixo do campo de digitação, em toda tela
 —, não só depois que a pessoa já perguntou `[da literatura]`, Nielsen H2
 (correspondência com o mundo real) e H1 (visibilidade do estado do sistema).
 
@@ -185,6 +185,26 @@ Dito de outro modo: a Etapa 2 encontrou três divergências entre o que os
 cenários pediam e o que o protótipo fazia, e a Etapa 3 as resolveu com decisões
 registradas (D1 a D6) e com estes esboços. É iteração de verdade, e é o que a
 ISO 9241-210:2019 chama de princípio (4).
+
+## 7. Segunda iteração: o primeiro protótipo não parecia um chat (07/11/2026)
+
+A equipe usou o protótipo de alta fidelidade e o reprovou em quatro pontos:
+não parecia um chat de IA; o visual de cartões empilhados; o fluxo em telas
+separadas (interesses → lista de conteúdos → explicação); e a tabela "Quem é
+quem". A revisão abaixo substitui DD01 e as partes de DD04 e DD16 que falavam
+da folha de troca de universo. É a avaliação formativa da ISO 9241-210 agindo
+antes do teste com participantes.
+
+| ID | Decisão | Origem | Requisito / persona | Critério |
+|---|---|---|---|---|
+| **DD28** | **Tudo dentro do chat.** O app pergunta o assunto e o aluno escreve com as próprias palavras; depois pergunta o universo, e o aluno escreve. Some a tela de interesses e a lista de conteúdos (substitui DD01) | `[decisão D7]` · `[questionário: itens 4 e 5]` — o público já estuda conversando com IA | RF02, RF03, RF10 · todas as personas | `3.3.2 Rótulos ou instruções (A)`: a pergunta do app é a instrução, e o campo tem rótulo acessível que muda com o papel dele |
+| **DD29** | O assunto digitado é **reconhecido na biblioteca** de conteúdos, sem IA. Assunto fora dela recebe resposta honesta ("ainda não tenho material de referência") e sugestões; o app não improvisa uma explicação sem fonte | `[decisão D6]` · `[da literatura]` — sem referência externa, a autocorreção da IA falha (Huang et al., 2024) | RNF04 · DD06 | — |
+| **DD30** | **Visual de chat de IA**: mensagens do app em texto corrido, sem balão; mensagens do aluno em balão à direita; campo arredondado fixo embaixo, Enter envia e Shift+Enter quebra a linha | `[hipótese da equipe]` — reconhecimento em vez de memorização (Nielsen H6): o modelo já é conhecido | RF10 · RNF07 | `1.4.11 Contraste não textual (AA)` na borda do campo |
+| **DD31** | **Ações numa barra fixa acima do campo** (Continuar, Ver versão técnica, Trocar universo, Está errada), e não dentro da mensagem. O botão "Continuar" fica sempre no mesmo lugar e não some debaixo do foco a cada parte | `[hipótese da equipe]` · consistência (Nielsen H4) | RF04, RF05, RF09 | `2.4.3 Ordem do foco (A)`, `3.2.3 Navegação consistente (AA)` |
+| **DD32** | "Trocar universo" é uma **pergunta do app na conversa**, não uma janela sobreposta (substitui a folha de DD16) | `[decisão D3]` — uma só forma de interação | RF09 | `3.2.5 Mudança a pedido (AAA)` |
+| **DD33** | "Quem é quem" vira **frases curtas** ("bolas numeradas → segmentos com número de sequência"), sem tabela | Avaliação da equipe · a 320 px a tabela virava uma pilha de células difícil de seguir | RF03 · Ana | `1.3.1 Informações e relações (A)`: a seta é decorativa e o leitor de tela ouve "no conceito" |
+| **DD34** | A tela só se move por gesto do aluno: ao enviar, a fala dele sobe para o alto e a resposta aparece logo abaixo. Mensagem do app chegando continua sem rolar a tela (mantém DD10) | `[da literatura]` — movimento automático desorienta quem usa ampliação | RF10 · Ana | `2.4.11 Foco não encoberto (AA)`: `scroll-padding` mantém o foco acima do rodapé fixo |
+| **DD35** | Com texto "Muito grande" ou "Enorme", ou tela baixa, o rodapé **deixa de ser fixo** e rola com a página | Persona Ana · a 400% de zoom um rodapé fixo ocuparia quase a tela toda | RA04, RA05 · Ana | `1.4.10 Realinhar (AA)` |
 
 ## Fontes
 

@@ -3,6 +3,7 @@ import {
   avancarAte,
   botaoContinuar,
   entrar,
+  escrever,
   parte,
   pedirExplicacao,
   perguntar,
@@ -26,18 +27,31 @@ test("T1 — chegar à explicação, do consentimento à primeira mensagem", asy
   await expect(page.getByRole("heading", { level: 1, name: "Antes de começar" })).toBeVisible();
   await semViolacoes(page);
 
-  await page.getByLabel("Li e concordo").check();
-  await page.getByRole("button", { name: "Continuar" }).click();
-  await expect(page.getByRole("heading", { level: 1, name: "Seus interesses" })).toBeFocused();
+  await entrar(page);
+  await semViolacoes(page);
 
-  await page.getByLabel(/Interesse/).fill("futebol");
-  await page.getByRole("button", { name: "Adicionar interesse" }).click();
-  await page.getByRole("button", { name: "Começar a estudar" }).click();
+  // tudo dentro do chat: assunto e universo escritos com as palavras do aluno (D7)
+  await escrever(page, "quero entender TCP");
+  await expect(page.getByText(/Combinado, vamos estudar Entrega confiável no TCP/)).toBeVisible();
+  // a fala do aluno aparece como mensagem dele
+  await expect(page.getByRole("log").getByText("quero entender TCP")).toBeVisible();
 
-  await pedirExplicacao(page);
+  await escrever(page, "futebol");
+  await expect(parte(page, 1)).toBeVisible();
   await expect(page.getByRole("status")).toContainText("Explicação pronta");
   await semViolacoes(page);
   await semRolagemHorizontal(page);
+});
+
+test("T1b — assunto fora da biblioteca: resposta honesta e sugestões", async ({ page }) => {
+  await entrar(page);
+  await escrever(page, "fotossíntese");
+  await expect(page.getByText(/Ainda não tenho material de referência sobre “fotossíntese”/)).toBeVisible();
+  // nunca um beco sem saída: a sugestão leva ao conteúdo que existe
+  await page.getByRole("button", { name: /Entrega confiável no TCP/ }).click();
+  await expect(page.getByText(/Combinado, vamos estudar/)).toBeVisible();
+  // e o foco vai para o campo, onde o aluno escreve o universo
+  await expect(page.getByLabel("Universo para a comparação")).toBeFocused();
 });
 
 test("T2 — chegar à parte em que a comparação falha", async ({ page }) => {
@@ -96,7 +110,7 @@ test("T4 — ajustar a leitura no meio da explicação, sem perder a conversa", 
   await page.getByRole("button", { name: "Salvar preferências" }).click();
   await expect(page.getByRole("status")).toContainText("salvas");
 
-  await page.getByRole("button", { name: "Estudar" }).click();
+  await page.getByRole("button", { name: "Voltar para a conversa" }).click();
   // a conversa continua onde estava: desmontar o chat apagaria o histórico
   await expect(parte(page, 2)).toBeVisible();
   await semRolagemHorizontal(page);
@@ -118,12 +132,12 @@ test("T6 — perguntar fora do conceito e receber recusa com saída", async ({ p
 
   await perguntar(page, "quem ganhou o jogo ontem?");
 
-  await expect(page.getByRole("heading", { name: "Fora deste conceito" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Fora deste conteúdo" })).toBeVisible();
   // a recusa nomeia o conceito atual, em vez de só dizer "não posso"
   await expect(page.getByText(/Só consigo responder sobre/)).toBeVisible();
   // duas saídas explícitas: nunca um beco sem saída (DD05)
-  await expect(page.getByRole("button", { name: "Continuar este conceito" })).toBeVisible();
-  await expect(page.getByRole("button", { name: "Escolher outro conceito" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Continuar este conteúdo" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Escolher outro conteúdo" })).toBeVisible();
   // e as ações da explicação continuam ao alcance depois da pergunta
   await expect(page.getByRole("button", { name: "Ver versão técnica" })).toBeVisible();
   await semViolacoes(page);
@@ -136,7 +150,7 @@ test("T6b — pergunta dentro do conceito é respondida", async ({ page }) => {
   await perguntar(page, "o que o receptor devolve quando recebe um segmento?");
 
   await expect(page.getByRole("heading", { name: "Resposta" })).toBeVisible();
-  await expect(page.getByRole("heading", { name: "Fora deste conceito" })).toHaveCount(0);
+  await expect(page.getByRole("heading", { name: "Fora deste conteúdo" })).toHaveCount(0);
 });
 
 test("RF09 — trocar de universo de dentro da explicação", async ({ page }) => {
@@ -144,15 +158,13 @@ test("RF09 — trocar de universo de dentro da explicação", async ({ page }) =
   await pedirExplicacao(page);
   await avancarAte(page, 2);
 
-  const abrir = page.getByRole("button", { name: "Trocar universo" });
-  await abrir.click();
-  await expect(page.getByRole("heading", { name: "Trocar de universo" })).toBeVisible();
-  // o universo em uso é dito em texto, não só por cor (DD13)
-  await expect(page.getByText("em uso agora")).toBeVisible();
+  await page.getByRole("button", { name: "Trocar universo" }).click();
+  await expect(page.getByText(/Qual universo você quer usar agora/)).toBeVisible();
+  // o pedido veio do aluno: o foco vai para o campo
+  await expect(page.getByLabel("Universo para a comparação")).toBeFocused();
   await semViolacoes(page);
 
-  await page.getByLabel("Usar outro universo").fill("xadrez");
-  await page.getByRole("button", { name: "Usar este universo" }).click();
+  await escrever(page, "xadrez");
 
   // o nome novo aparece na conversa, e o que foi lido antes continua lá —
   // é o que permite comparar as duas analogias, que é o motivo de RF09
@@ -161,6 +173,4 @@ test("RF09 — trocar de universo de dentro da explicação", async ({ page }) =
   // sem explicação escrita à mão para "xadrez", o app mostra a padrão em vez
   // de inventar: é o comportamento do modo Mágico de Oz, e precisa ficar dito
   await expect(page.getByRole("heading", { name: "Explicação padrão" })).toBeVisible();
-  // a folha fechou sozinha depois da escolha
-  await expect(page.getByRole("heading", { name: "Trocar de universo" })).toHaveCount(0);
 });

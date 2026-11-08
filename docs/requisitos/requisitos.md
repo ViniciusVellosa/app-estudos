@@ -9,8 +9,8 @@ Requisitos de acessibilidade e personalização vêm do Lumen (códigos RA e DP)
 | ID | História | Prioridade | Rastreio | Teste automatizado |
 |---|---|---|---|---|
 | RF01 | Como aluno, quero começar sem criar conta com nome e e-mail, para não perder tempo nem expor dados | Must | LGPD art. 6º, III (minimização) → todas as personas · [hipótese da equipe] | `test_api.py::test_health` + e2e |
-| RF02 | Como aluno, quero informar meus interesses e o quanto conheço deles | Must | Achado 4 (itens 7 e 8; média 4,8) → Rafael, Caio | `test_interest_requires_consent` |
-| RF03 | Como aluno, quero a explicação de um conceito usando meu interesse, em passos curtos | Must | Achado 2 (item 6: abstração 4 de 5) e achado 6 (item 14) → Ana, Rafael · Cenários 1 e 2 | e2e `fluxo-principal` |
+| RF02 | Como aluno, quero dizer no chat, com minhas palavras, o universo que conheço (D7) | Must | Achado 4 (itens 7 e 8; média 4,8) → Rafael, Caio | `test_interest_requires_consent` |
+| RF03 | Como aluno, quero escrever no chat o assunto que quero entender e receber a explicação usando meu universo, em passos curtos (D7) | Must | Achado 2 (item 6: abstração 4 de 5) e achado 6 (item 14) → Ana, Rafael · Cenários 1 e 2 | e2e `fluxo-principal` |
 | RF04 | Como aluno, quero que a explicação comece com a analogia e que um botão mostre a versão técnica (sem analogia), e volte, sem perder o ponto em que eu estava | Must | Achado 3 (item 11: maior média, 4,0; R01) → Rafael, Caio · DP05 · Cenários 2 e 3 · DD03 | e2e `T3`; unidade `passos.test.ts` |
 | RF05 | Como aluno, quero avisar que uma explicação está errada ou confusa | Should | Achado 4 (item 12: 3 de 5) → Rafael · DP10 · Cenário 2 | `test_wrong_feedback_...` |
 | RF06 | Como aluno com baixa visão, quero aumentar o texto e usar alto contraste no app | Must | Achado 5 (item 13: 4 de 5 ajustam a leitura) → Ana [da literatura], Rafael · Cenário 1 | e2e `texto ampliado...` |
@@ -56,6 +56,7 @@ Cenário: explicação reprovada na verificação
 | D4 | É possível **trocar de universo de dentro da explicação** | RF09 (novo) |
 | D5 | O chat **aceita texto livre, mas responde só dentro do conceito** escolhido; fora dele, recusa com educação e oferece opções | RF11 (novo), RNF04 |
 | D6 | Não há revisão humana: a **própria IA verifica a resposta antes de exibi-la** (autoverificação), seguida dos validadores automáticos | RNF04, RF03, RF11 |
+| D7 | **Tudo dentro do chat**: o aluno escreve o assunto e o universo com as próprias palavras; o assunto é reconhecido na biblioteca de conteúdos (com material de referência) e, fora dela, o app diz que ainda não tem material e sugere o que tem | RF02, RF03, RF10, RNF04 |
 
 ### Cuidados de acessibilidade para a interface de chat (Lumen)
 - Histórico de mensagens com `role="log"` (anúncio educado ao leitor de tela); anunciar a mensagem pronta, não cada pedaço do texto enquanto é gerado (WCAG 4.1.3).

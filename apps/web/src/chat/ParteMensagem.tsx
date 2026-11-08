@@ -1,5 +1,5 @@
 import type { Explanation } from "../api";
-import { PARTES, tituloDaParte } from "./partes";
+import { PARTES } from "./partes";
 
 /**
  * O conteúdo de uma parte da explicação dentro de uma mensagem do chat.
@@ -44,26 +44,19 @@ export function ParteMensagem({
     case "A cena":
       return <p>{p.cena}</p>;
     case "Quem é quem":
+      // Frases em vez de tabela: tabela não combina com conversa e, a 320px,
+      // virava uma pilha de células difícil de seguir.
       return (
-        <table>
-          <caption className="visualmente-oculto">
-            {tituloDaParte(explicacao, parte)}: correspondência entre a cena e o conceito
-          </caption>
-          <thead>
-            <tr>
-              <th scope="col">Na cena</th>
-              <th scope="col">No conceito</th>
-            </tr>
-          </thead>
-          <tbody>
-            {p.mapeamento.map((linha, i) => (
-              <tr key={i}>
-                <td data-rotulo="Na cena">{linha.universo}</td>
-                <td data-rotulo="No conceito">{linha.tecnico}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+        <ul className="lista-correspondencia">
+          {p.mapeamento.map((linha, i) => (
+            <li key={i}>
+              <strong>{linha.universo}</strong>
+              <span aria-hidden="true"> → </span>
+              <span className="visualmente-oculto">: no conceito, </span>
+              {linha.tecnico}
+            </li>
+          ))}
+        </ul>
       );
     case "Onde a comparação não vale":
       return (

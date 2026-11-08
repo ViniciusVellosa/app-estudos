@@ -127,3 +127,15 @@ class QuestionOut(BaseModel):
 class FeedbackIn(BaseModel):
     kind: Literal["util", "errada", "confusa"]
     comment: str | None = Field(default=None, max_length=500)
+
+
+class AssuntoIn(BaseModel):
+    """Assunto digitado no chat. Não é gravado: só serve para achar o conteúdo."""
+
+    texto: str = Field(min_length=1, max_length=200)
+
+
+class AssuntoOut(BaseModel):
+    encontrado: bool
+    conceito: ConceptOut | None
+    sugestoes: list[ConceptOut]
