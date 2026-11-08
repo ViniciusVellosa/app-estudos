@@ -1,108 +1,256 @@
-# App de Estudos — projeto-base
+# Estudos do Seu Jeito
 
-App web (mobile-first) que explica conteúdos usando o universo de interesse
-do aluno, com foco em personalização, carga cognitiva e acessibilidade
-(WCAG 2.2). Gerado pela skill **Dédalo**; a parte de IHC é do **Lumen**.
+**Aplicativo web de apoio aos estudos que explica conteúdos técnicos por meio de
+analogias com o universo de interesse do estudante: um jogo, uma série, um
+esporte, um anime.**
 
-## O que já funciona
-- Sessão anônima (sem nome nem e-mail), consentimento e interesses.
-- Explicação em seis passos: conceito → cena → quem é quem → onde a
-  comparação falha → explicação técnica → pergunta de transferência.
-- Explicação padrão (sem analogia) sempre a um toque.
-- Motor de explicações **sem IA** (explicações escritas à mão) ou **com IA**
-  (Claude ou modelo local via Ollama), com validadores anti-erro e revisão humana.
-- Preferências de leitura: tamanho do texto, tema claro/escuro/alto contraste,
-  redução de animações.
-- "Meus dados": ver e apagar tudo (LGPD).
-- Testes: 27 da API (pytest, em SQLite e PostgreSQL) e de ponta a ponta com axe (Playwright).
+Projeto da disciplina de **Interação Humano-Computador** do curso de Engenharia
+da Computação da **UNIARA — Universidade de Araraquara**, 2026.
 
-## Limitações conhecidas
-- Sessão guardada no navegador (localStorage): limpar o navegador perde o acesso aos dados.
-- Sem limite de requisições (rate limiting) ainda; adicione antes de ligar a IA em público.
-- Tabelas criadas com `create_all`; adote Alembic quando o modelo de dados estabilizar.
-- Qualquer sessão pode marcar uma explicação como "errada" e tirá-la de circulação até a revisão.
+---
 
-## Rodar com Docker (recomendado)
+## Integrantes
+
+- Gustavo Henrique Femiano
+- Jean Domiciano de Menezes
+- João Pedro de Jesus Miranda
+- Vinicius Gussoni Vellosa
+- Yasmim Fernandes de Paula
+
+---
+
+## Sobre o projeto
+
+Na pesquisa com estudantes feita na Etapa 1, o principal obstáculo relatado ao
+estudar conteúdos técnicos foi a **explicação abstrata demais** (4 de 5
+respondentes), e não a dificuldade de leitura. A proposta do aplicativo é tornar
+o conceito concreto comparando-o com algo que o estudante já conhece bem,
+sem abrir mão da correção técnica.
+
+### Como funciona
+
+1. O estudante conversa com o aplicativo numa interface de chat, no modelo dos
+   assistentes de IA que já usa para estudar.
+2. Ele escreve **o assunto** que quer entender (por exemplo, "TCP" ou
+   "árvore B") e **o universo** que quer usar na comparação.
+3. A explicação chega em mensagens curtas, uma etapa por vez, seguindo o modelo
+   *Teaching-With-Analogies* (Glynn): o conceito, a cena da analogia, a
+   correspondência entre os elementos, **onde a comparação deixa de valer**, a
+   versão técnica e uma pergunta para verificar o entendimento.
+4. A qualquer momento é possível ver a **versão técnica, sem analogia**, trocar
+   de universo ou marcar a explicação como errada.
+5. O estudante pode fazer perguntas, que são respondidas **somente dentro do
+   assunto escolhido**.
+
+### Confiabilidade do conteúdo
+
+Analogias geradas por IA podem soar convincentes e estar erradas. Para reduzir
+esse risco, o aplicativo:
+
+- **pesquisa o assunto na web** (API do Gemini com Google Search) e monta um
+  texto de referência com fontes, que são exibidas ao estudante antes da
+  explicação;
+- submete cada explicação a uma **autoverificação** da própria IA, inspirada no
+  método *Chain-of-Verification* (Dhuliawala et al., 2024), conferindo-a contra
+  esse texto de referência;
+- aplica **validadores automáticos**, como a exigência de que cada
+  correspondência da analogia cite um trecho literal da referência;
+- mostra a **explicação padrão, sem analogia**, quando a explicação adaptada não
+  passa na verificação. Nunca exibe conteúdo reprovado.
+
+As decisões e seus limites estão registrados no
+[ADR 0003](docs/adr/0003-autoverificacao-da-ia.md).
+
+### Acessibilidade e privacidade
+
+- Desenvolvido para atender à **WCAG 2.2, nível AA**, com atenção a estudantes
+  com **baixa visão**: texto ampliável até 200%, tema de alto contraste
+  (amarelo sobre preto), reorganização do conteúdo sem rolagem lateral a 320 px,
+  navegação completa por teclado e compatibilidade com leitores de tela.
+- Testes automatizados com **axe-core** nas telas principais, no celular e no
+  computador.
+- **Nenhum dado pessoal identificável é solicitado**: não há cadastro com nome
+  ou e-mail. O estudante pode ver e apagar tudo o que foi guardado, em atenção
+  à **LGPD**.
+
+---
+
+## Etapas do projeto
+
+O trabalho segue o ciclo de design centrado no usuário (ISO 9241-210):
+**Entender → Desenhar → Avaliar**.
+
+| Etapa | Conteúdo | Situação |
+|---|---|---|
+| **1. Pesquisa com usuários** | Plano de pesquisa, questionário e síntese dos resultados (n = 5) | Concluída |
+| **2. Personas e cenários** | Personas, análise PACT, cenários e tarefas de teste | Concluída |
+| **3. Prototipação** | Esboços de baixa fidelidade, decisões de design e o aplicativo funcional como protótipo de alta fidelidade | Concluída |
+| **4. Avaliação** | Protocolo do teste de usabilidade, questionário SUS, avaliação heurística e auditoria WCAG | Em andamento |
+
+Cada documento indica a origem do que afirma (dado da pesquisa, literatura ou
+hipótese da equipe), formando uma cadeia de rastreabilidade do achado da
+pesquisa até o requisito, a decisão de design, o código e o teste. O ponto de
+partida é o [índice da documentação](docs/README.md).
+
+---
+
+## Organização do repositório
+
+```
+.
+├── apps/
+│   ├── api/                  Back-end (Python, FastAPI)
+│   │   ├── app/
+│   │   │   ├── routers/      Rotas da API
+│   │   │   ├── services/     Pesquisa na web, explicações, autoverificação, perguntas
+│   │   │   ├── providers/    Integração com os modelos de IA
+│   │   │   ├── validators/   Validadores automáticos do conteúdo
+│   │   │   └── prompts/      Instruções enviadas à IA
+│   │   ├── content/          Conteúdos pré-gravados (texto-base e explicações)
+│   │   └── tests/            Testes da API (pytest)
+│   └── web/                  Front-end (TypeScript, React)
+│       ├── src/              Interface: chat, preferências de leitura, dados do usuário
+│       └── e2e/              Testes de ponta a ponta e de acessibilidade (Playwright + axe)
+├── docs/
+│   ├── etapa-1-pesquisa/           Plano, questionário e síntese da pesquisa
+│   ├── etapa-2-personas-cenarios/  Personas, PACT e cenários
+│   ├── etapa-3-prototipo/          Esboços e decisões de design
+│   ├── etapa-4-avaliacao/          Protocolo do teste, SUS, heurísticas, auditoria WCAG
+│   ├── requisitos/                 Requisitos funcionais e não funcionais
+│   └── adr/                        Registros de decisões de arquitetura
+├── compose.yaml              Orquestração com Docker (banco, API e front-end)
+└── .env.example              Modelo de configuração (sem segredos)
+```
+
+---
+
+## Tecnologias
+
+| Parte | Tecnologias |
+|---|---|
+| Front-end | TypeScript, React 19, Vite |
+| Back-end | Python 3.12+, FastAPI, Pydantic, SQLAlchemy |
+| Banco de dados | PostgreSQL 18 |
+| Inteligência artificial | API do Gemini (geração, autoverificação e pesquisa com Google Search) |
+| Infraestrutura | Docker e Docker Compose |
+| Testes | pytest, Playwright, axe-core |
+
+---
+
+## Como executar
+
+### Pré-requisitos
+
+- [Git](https://git-scm.com/)
+- [Docker Desktop](https://www.docker.com/products/docker-desktop/) (inclui o Docker Compose)
+- Opcional, para usar a IA: uma chave da API do Gemini, gerada em
+  [Google AI Studio](https://aistudio.google.com/apikey)
+
+### 1. Obter o código e criar a configuração
+
 ```bash
-cp .env.example .env          # e troque POSTGRES_PASSWORD
-docker compose up --build     # web: http://localhost:5173 · API: http://localhost:8000/docs
-docker compose watch          # desenvolvimento: recarrega a API ao salvar
+git clone https://github.com/ViniciusVellosa/app-estudos.git
+cd app-estudos
+cp .env.example .env
 ```
 
-## Rodar sem Docker
+No Windows (PowerShell), troque a última linha por `Copy-Item .env.example .env`.
+
+O arquivo `.env` guarda a configuração local e **não é enviado ao repositório**.
+Antes de subir, troque o valor de `POSTGRES_PASSWORD`.
+
+### 2. Subir o aplicativo
+
 ```bash
-# API (precisa do uv: https://docs.astral.sh/uv/)
-cd apps/api && uv sync --extra llm && uv run fastapi dev app/main.py   # usa SQLite local; --extra llm instala os SDKs de IA
-# Front-end (Node 24)
-cd apps/web && npm install && npm run dev                     # http://localhost:5173
+docker compose up --build --wait
 ```
 
-## Testes
+| Serviço | Endereço |
+|---|---|
+| Aplicativo | <http://localhost:5173> |
+| Documentação da API | <http://localhost:8000/docs> |
+
+Para encerrar: `docker compose down`.
+
+Com a configuração padrão, o aplicativo funciona **sem IA**: o assunto
+disponível é *Entrega confiável no TCP*, com explicação pré-gravada. Esse é o
+modo usado no teste de usabilidade, para que as sessões não dependam de rede
+nem de cota da API.
+
+### 3. Ativar a IA (opcional)
+
+No arquivo `.env`, defina:
+
+```
+EXPLANATION_PROVIDER=llm
+LLM_BACKEND=openai_compatible
+LLM_BASE_URL=https://generativelanguage.googleapis.com/v1beta/openai/
+LLM_MODEL=gemini-3.8-flash
+LLM_API_KEY=sua-chave-aqui
+PESQUISA_PROVIDER=gemini
+```
+
+Antes de abrir o navegador, é possível conferir a configuração com uma chamada
+real à API (requer o [uv](https://docs.astral.sh/uv/)):
+
 ```bash
-cd apps/api && uv run pytest
-cd apps/web && npx playwright install chromium && npx playwright test   # sobe API e front sozinho
+cd apps/api
+uv sync --extra llm
+uv run python -m app.smoke --pesquisa "árvore B" "futebol"
 ```
 
-## Ligar a IA
-1. No `.env`: `EXPLANATION_PROVIDER=llm` e os quatro valores do provedor.
-   **O `.env` está fora do Git; a chave nunca entra no repositório nem em
-   variáveis `VITE_`, que vão embutidas no JavaScript.**
+O teste mostra o texto pesquisado, as fontes encontradas e se a explicação foi
+aprovada na verificação. Depois, suba o aplicativo novamente com
+`docker compose up --build --wait`.
 
-   | Provedor | `LLM_BACKEND` | `LLM_BASE_URL` | `LLM_MODEL` |
-   |---|---|---|---|
-   | **Gemini** | `openai_compatible` | `https://generativelanguage.googleapis.com/v1beta/openai/` | `gemini-3.8-flash` |
-   | Anthropic | `anthropic` | *(vazio)* | o nome atual na documentação |
-   | Ollama local, sem custo | `openai_compatible` | `http://host.docker.internal:11434/v1` (no Docker) | o modelo que você baixou |
+> O plano gratuito da API do Gemini tem limites de uso. Cada explicação gera
+> algumas chamadas ao modelo (rascunho, verificação e, para assuntos novos, a
+> pesquisa). Se aparecer o erro HTTP 429, o limite foi atingido; o erro
+> HTTP 503 indica sobrecarga temporária do serviço.
 
-   O endereço do Gemini vem da página de compatibilidade com a OpenAI do Google,
-   conferida em 07/11/2026. Nomes de modelo mudam: confirme antes de fixar.
-   A chave do Gemini se gera em <https://aistudio.google.com/apikey>.
+### Executar os testes
 
-2. Confira a configuração com uma chamada de verdade, antes de abrir o navegador:
-   ```bash
-   cd apps/api && uv run python -m app.smoke
-   ```
-   Ele gera uma explicação, roda a autoverificação e os validadores, e diz onde
-   parou. Não imprime a chave.
-3. Explicações geradas passam pela **autoverificação** antes de aparecer
-   ([ADR 0003](docs/adr/0003-autoverificacao-da-ia.md)): o modelo escreve
-   perguntas de checagem sobre o próprio rascunho, responde cada uma numa
-   chamada separada **sem ver o rascunho** e só então dá o veredito.
-   Reprovada duas vezes, o aluno vê a explicação padrão com um aviso.
-4. Para inspecionar o que foi gerado e tratar o que alguém marcou como
-   "está errada" (RF05):
-   ```bash
-   docker compose exec api python -m app.review list
-   docker compose exec api python -m app.review show 3
-   docker compose exec api python -m app.review reject 3
-   ```
-5. **Para o teste de usabilidade, use `EXPLANATION_PROVIDER=curated`.** O que
-   se avalia na Etapa 4 é a interface, não o modelo, e assim as sessões não
-   dependem de rede nem de chave.
+```bash
+# API
+cd apps/api
+uv run pytest
 
-## Adicionar conteúdo
-- **Novo conceito:** crie `apps/api/content/concepts/<slug>.md` com o
-  texto-base revisado e o cabeçalho (`key_terms`, `forbidden_patterns` com as
-  armadilhas conhecidas). Peça a revisão do professor da disciplina.
-- **Nova explicação escrita à mão:** copie
-  `content/explanations/tcp-entrega-confiavel/futebol.json` para
-  `content/explanations/<slug>/<interesse>.json`. Ela é validada ao subir a API.
-
-## Estrutura
-```
-apps/api    FastAPI · validators/grounding.py (anti-erro) · providers/ (curated, llm)
-apps/web    React + Vite + TS · e2e/ (Playwright + axe)
-
-docs/README.md              índice da documentação e cadeia de rastreabilidade
-docs/etapa-1-pesquisa       pesquisa com usuários: plano, questionário, consentimento
-docs/etapa-2-personas-cenarios  personas, PACT, cenários, tarefas T1–T5
-docs/etapa-3-prototipo      o app é o protótipo; tokens validados, decisões de design
-docs/etapa-4-avaliacao      protocolo do teste, SUS, heurística, auditoria WCAG
-docs/requisitos             requisitos funcionais e não funcionais (RF, RNF)
-docs/adr                    decisões de arquitetura
-
-compose.yaml · .env.example · .github/workflows/ci.yml
+# Interface, acessibilidade e fluxos completos (sobe a API e o front-end sozinho)
+cd apps/web
+npm install
+npx playwright install chromium
+npx playwright test
 ```
 
-As quatro pastas `etapa-*` seguem o ciclo da disciplina de IHC
-(Entender → Desenhar → Avaliar). Comece por [docs/README.md](docs/README.md).
+### Executar sem Docker
+
+Requer o [uv](https://docs.astral.sh/uv/) e o [Node.js](https://nodejs.org/) 24.
+
+```bash
+# Terminal 1: API, com banco SQLite local
+cd apps/api
+uv sync --extra llm
+uv run fastapi dev app/main.py
+
+# Terminal 2: front-end
+cd apps/web
+npm install
+npm run dev
+```
+
+---
+
+## Dados da pesquisa
+
+As respostas do questionário da Etapa 1 **não fazem parte deste repositório**.
+Os documentos apresentam apenas resultados agregados e respostas identificadas
+por códigos (R01 a R05), conforme o compromisso assumido com os participantes.
+
+---
+
+## Uso de ferramentas de IA no desenvolvimento
+
+Ferramentas de IA generativa (Claude, da Anthropic) foram usadas como apoio na
+programação, na revisão de acessibilidade e na organização da documentação.
+As decisões de projeto, a pesquisa com usuários e a avaliação são da equipe,
+e as fontes consultadas estão citadas nos documentos de cada etapa.
