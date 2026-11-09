@@ -135,6 +135,7 @@ def test_assunto_pesquisado_serve_explicacao_e_perguntas(client, auth, com_pesqu
 
 def test_le_as_fontes_no_formato_real_do_sdk_do_gemini():
     """Monta a resposta com os tipos do próprio SDK, para pegar nome de campo errado."""
+    pytest.importorskip("google.genai", reason="SDK do Gemini: uv sync --extra llm")
     from google.genai import types
 
     from app.services.pesquisa import fontes_de
@@ -159,6 +160,7 @@ def test_le_as_fontes_no_formato_real_do_sdk_do_gemini():
 
 
 def test_gemini_pesquisador_monta_a_chamada_com_google_search(monkeypatch):
+    pytest.importorskip("google.genai", reason="SDK do Gemini: uv sync --extra llm")
     from google.genai import types
 
     from app.config import Settings
