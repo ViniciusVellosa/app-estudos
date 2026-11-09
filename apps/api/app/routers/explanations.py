@@ -80,7 +80,11 @@ def recognize_subject(body: AssuntoIn, request: Request, user: ConsentedUser, db
         )
     return AssuntoOut(
         encontrado=True,
-        conceito=ConceptOut(slug=p.slug, title=p.titulo, discipline="Pesquisado na web"),
+        conceito=ConceptOut(
+            slug=p.slug,
+            title=p.titulo,
+            discipline="Pesquisado na web" if p.fontes else "Escrito pela IA, sem fontes",
+        ),
         sugestoes=sugestoes,
         pesquisado=True,
         fontes=[FonteOut(**f) for f in p.fontes],

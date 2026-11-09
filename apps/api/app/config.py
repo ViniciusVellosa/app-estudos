@@ -48,7 +48,9 @@ class Settings(BaseSettings):
     # Pesquisa na web de assuntos fora da biblioteca (decisão D8). "gemini"
     # usa a ferramenta google_search da API do Gemini, com a mesma chave
     # LLM_API_KEY. Vazio = só a biblioteca de conteúdos.
-    pesquisa_provider: Literal["", "gemini"] = ""
+    # "ia" = sem busca: a própria IA escreve a referência com o conhecimento
+    # dela (decisão D9). "gemini" tenta a busca e, se falhar, usa "ia".
+    pesquisa_provider: Literal["", "gemini", "ia"] = ""
     # Perguntas de checagem por explicação na autoverificação (D6). Cada uma
     # é uma chamada a mais ao modelo; 1 economiza cota (ver verification.py).
     autoverificacao_perguntas: int = Field(default=1, ge=1, le=6)

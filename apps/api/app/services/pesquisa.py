@@ -24,17 +24,21 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Protocol
 
+from pydantic import BaseModel, Field
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.config import Settings
 from app.content import Concept, load_concepts, slugify
 from app.db import Pesquisa
+from app.providers.base import GenerationError, StructuredChat
 from app.services.assunto import normaliza
 
 log = logging.getLogger(__name__)
 
-PROMPT_PATH = Path(__file__).resolve().parent.parent / "prompts" / "pesquisa_sistema.md"
+PROMPTS = Path(__file__).resolve().parent.parent / "prompts"
+PROMPT_PATH = PROMPTS / "pesquisa_sistema.md"
+PROMPT_SEM_BUSCA = PROMPTS / "referencia_sem_busca_sistema.md"
 
 # Um texto de referência curto demais não sustenta uma analogia de seis partes.
 MIN_TEXTO = 300
@@ -86,19 +90,26 @@ def interpreta(resposta: str, fontes: list[Fonte]) -> ResultadoPesquisa:
     if not (titulo and corpo):
         raise PesquisaError("a pesquisa voltou fora do formato combinado")
 
-    corpo_txt = corpo.group(1).strip()
-    if len(corpo_txt) < MIN_TEXTO:
-        raise PesquisaError("a pesquisa voltou com texto curto demais para servir de referência")
     if not fontes:
-        # Sem fonte não há referência externa: seria a IA conferindo a si mesma.
+        # Na pesquisa na web, resposta sem fonte é a IA fingindo que pesquisou.
         raise PesquisaError("a pesquisa não trouxe nenhuma fonte da web")
-
-    # Só valem termos que estão de fato no texto: os validadores procuram por eles.
-    corpo_norm = normaliza(corpo_txt)
     lista = [t.strip() for t in (termos.group(1) if termos else "").split(";")]
-    lista = [t for t in lista if t and normaliza(t) and normaliza(t) in corpo_norm][:8]
+    return valida(titulo.group(1), corpo.group(1), lista, fontes)
 
-    return ResultadoPesquisa(titulo.group(1).strip()[:200], corpo_txt, lista, fontes)
+
+def valida(titulo: str, texto: str, termos: list[str], fontes: list[Fonte]) -> ResultadoPesquisa:
+    """Confere se o texto serve de referência e limpa a lista de termos."""
+    texto = (texto or "").strip()
+    titulo = (titulo or "").strip()
+    if not titulo:
+        raise PesquisaError("a referência voltou sem título")
+    if len(texto) < MIN_TEXTO:
+        raise PesquisaError("a referência voltou com texto curto demais")
+    # Só valem termos que estão de fato no texto: os validadores procuram por eles.
+    texto_norm = normaliza(texto)
+    lista = [t.strip() for t in termos if t and t.strip()]
+    lista = [t for t in lista if normaliza(t) and normaliza(t) in texto_norm][:8]
+    return ResultadoPesquisa(titulo[:200], texto, lista, fontes)
 
 
 class GeminiPesquisador:
@@ -148,6 +159,65 @@ class GeminiPesquisador:
         return interpreta(resposta.text or "", fontes_de(resposta))
 
 
+class ReferenciaOut(BaseModel):
+    """Saída estruturada da referência escrita sem busca."""
+
+    recusa: str | None = None
+    titulo: str = ""
+    termos: list[str] = Field(default_factory=list)
+    texto: str = ""
+
+
+class ConhecimentoPesquisador:
+    """Referência escrita pela IA com o próprio conhecimento, sem busca (D9).
+
+    Usado quando a pesquisa na web não está disponível (no plano gratuito do
+    Gemini, a ferramenta Google Search tem cota zero). É a opção mais fraca:
+    sem fonte externa, a autoverificação compara a IA com ela mesma, o caso em
+    que a autocorreção mais falha (Huang et al., 2024). Por isso o aluno é
+    avisado de que não há fontes e de que deve conferir com o material dele.
+
+    Reaproveita o mesmo cliente das explicações (StructuredChat): mesma chave,
+    mesmo modelo, mesmo tempo limite.
+    """
+
+    name = "ia:sem_busca"
+
+    def __init__(self, chat: StructuredChat):
+        self.chat = chat
+
+    def pesquisar(self, assunto: str) -> ResultadoPesquisa:
+        try:
+            r = self.chat.ask(
+                PROMPT_SEM_BUSCA.read_text(encoding="utf-8"),
+                f"Assunto pedido pelo estudante: {assunto}",
+                ReferenciaOut,
+            )
+        except GenerationError as exc:
+            raise PesquisaError(f"falha ao escrever a referência: {exc}") from exc
+        if r.recusa:
+            raise AssuntoRecusado(r.recusa)
+        return valida(r.titulo, r.texto, r.termos, [])
+
+
+class PesquisadorComReserva:
+    """Tenta a pesquisa na web; se ela falhar, usa a referência sem busca."""
+
+    def __init__(self, principal: Pesquisador, reserva: Pesquisador):
+        self.principal = principal
+        self.reserva = reserva
+        self.name = f"{principal.name} → {reserva.name}"
+
+    def pesquisar(self, assunto: str) -> ResultadoPesquisa:
+        try:
+            return self.principal.pesquisar(assunto)
+        except AssuntoRecusado:
+            raise
+        except PesquisaError as exc:
+            log.warning("pesquisa na web falhou, usando a referência sem busca: %s", exc)
+            return self.reserva.pesquisar(assunto)
+
+
 def fontes_de(resposta) -> list[Fonte]:
     """Fontes da busca, sem repetir endereço (groundingMetadata.groundingChunks)."""
     vistas: dict[str, Fonte] = {}
@@ -168,7 +238,7 @@ def conceito_da_pesquisa(p: Pesquisa) -> Concept:
     return Concept(
         slug=p.slug,
         title=p.titulo,
-        discipline="Pesquisado na web",
+        discipline="Pesquisado na web" if p.fontes else "Escrito pela IA, sem fontes",
         base_text=p.texto_base,
         key_terms=list(p.termos or []),
         forbidden_patterns=[],

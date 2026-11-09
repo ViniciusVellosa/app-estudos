@@ -46,14 +46,24 @@ async def lifespan(app: FastAPI):
             # o app continua funcionando só com conteúdo curado
             log.error("IA desativada: %s", exc)
     app.state.pesquisador = None
-    if settings.explanation_provider == "llm" and settings.pesquisa_provider == "gemini":
-        from app.services.pesquisa import GeminiPesquisador, PesquisaError
+    if app.state.generator is not None and settings.pesquisa_provider:
+        from app.services.pesquisa import (
+            ConhecimentoPesquisador,
+            GeminiPesquisador,
+            PesquisadorComReserva,
+            PesquisaError,
+        )
 
-        try:
-            app.state.pesquisador = GeminiPesquisador(settings)
-            log.info("pesquisa na web ativa (%s)", app.state.pesquisador.name)
-        except PesquisaError as exc:
-            log.error("pesquisa na web desativada: %s", exc)
+        # A referência sem busca é sempre a reserva: usa o mesmo cliente das
+        # explicações, então funciona sempre que a IA funciona.
+        sem_busca = ConhecimentoPesquisador(app.state.generator)
+        app.state.pesquisador = sem_busca
+        if settings.pesquisa_provider == "gemini":
+            try:
+                app.state.pesquisador = PesquisadorComReserva(GeminiPesquisador(settings), sem_busca)
+            except PesquisaError as exc:
+                log.error("pesquisa na web desativada, usando só a referência sem busca: %s", exc)
+        log.info("assuntos fora da biblioteca: %s", app.state.pesquisador.name)
     yield
 
 

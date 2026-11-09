@@ -26,20 +26,36 @@ from app.services.verification import LlmSelfVerifier
 
 def pesquisa(argv: list[str]) -> int:
     """Pesquisa um assunto na web (D8) e, se der certo, gera a explicação."""
-    from app.services.pesquisa import Concept, GeminiPesquisador, PesquisaError
+    from app.providers.base import GenerationError
+    from app.providers.llm import build_llm_generator
+    from app.services.pesquisa import (
+        Concept,
+        ConhecimentoPesquisador,
+        GeminiPesquisador,
+        PesquisadorComReserva,
+        PesquisaError,
+    )
 
     settings = get_settings()
     assunto = argv[0] if argv else "árvore B"
     interesse = argv[1] if len(argv) > 1 else "futebol"
-    print(f"pesquisa ............ {settings.pesquisa_provider or '(DESLIGADA: defina PESQUISA_PROVIDER=gemini)'}")
+    print(f"pesquisa ............ {settings.pesquisa_provider or '(DESLIGADA: defina PESQUISA_PROVIDER=ia ou gemini)'}")
     print(f"modelo .............. {settings.pesquisa_model or settings.llm_model or '(VAZIO)'}")
     print(f"chave ............... {'definida' if settings.llm_api_key else 'VAZIA'}")
     try:
-        r = GeminiPesquisador(settings).pesquisar(assunto)
-    except PesquisaError as exc:
+        # o mesmo arranjo do app (main.py): "ia" = sem busca; "gemini" = busca
+        # na web com a referência sem busca como reserva
+        sem_busca = ConhecimentoPesquisador(build_llm_generator(settings))
+        if settings.pesquisa_provider == "gemini":
+            pesquisador = PesquisadorComReserva(GeminiPesquisador(settings), sem_busca)
+        else:
+            pesquisador = sem_busca
+        print(f"modo ................ {pesquisador.name}")
+        r = pesquisador.pesquisar(assunto)
+    except (PesquisaError, GenerationError) as exc:
         print(f"\nERRO na pesquisa: {exc}")
         return 1
-    print(f"\ntítulo: {r.titulo}\ntermos: {', '.join(r.termos)}\nfontes:")
+    print(f"\ntítulo: {r.titulo}\ntermos: {', '.join(r.termos)}\nfontes:{'' if r.fontes else ' nenhuma (referência escrita pela IA, sem busca)'}")
     for f in r.fontes:
         print(f"  - {f.titulo}: {f.url}")
     print(f"\n{r.texto}\n")

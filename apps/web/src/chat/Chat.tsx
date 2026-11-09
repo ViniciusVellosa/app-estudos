@@ -138,13 +138,25 @@ export function Chat({
       tira(espera.id);
       if (r.encontrado && r.conceito) {
         setConceito(r.conceito);
-        if (r.pesquisado) {
+        if (r.pesquisado && r.fontes.length > 0) {
           acrescenta({
             id: novoId(),
             papel: "app",
             tipo: "texto",
             texto: `Pesquisei sobre ${r.conceito.title} na web. Vou usar estas fontes como referência e conferir a explicação com elas:`,
             fontes: r.fontes,
+          });
+        } else if (r.pesquisado) {
+          // D9: sem busca na web, a referência é escrita pela própria IA. O
+          // aluno precisa saber disso para dar à explicação o peso certo.
+          acrescenta({
+            id: novoId(),
+            papel: "app",
+            tipo: "aviso",
+            texto:
+              `Não tenho material revisado sobre ${r.conceito.title}, então a explicação vai se basear ` +
+              "no conhecimento da própria IA, sem fontes da web. Eu confiro antes de mostrar, " +
+              "mas vale comparar com o material da sua disciplina.",
           });
         }
         perguntarUniverso(

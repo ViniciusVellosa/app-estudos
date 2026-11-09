@@ -58,6 +58,7 @@ Cenário: explicação reprovada na verificação
 | D6 | Não há revisão humana: a **própria IA verifica a resposta antes de exibi-la** (autoverificação), seguida dos validadores automáticos | RNF04, RF03, RF11 |
 | D7 | **Tudo dentro do chat**: o aluno escreve o assunto e o universo com as próprias palavras; o assunto é reconhecido na biblioteca de conteúdos (com material de referência) e, fora dela, o app diz que ainda não tem material e sugere o que tem | RF02, RF03, RF10, RNF04 |
 | D8 | **Pesquisa na web**: assunto fora da biblioteca é pesquisado pela API do Gemini (Google Search); a IA monta um texto de referência com fontes, guardado para reuso, e a explicação é gerada e autoverificada contra ele. O aluno vê as fontes antes da explicação | RF03, RNF04, D6, D7 |
+| D9 | **Referência escrita pela IA quando não há busca na web**: no plano gratuito do Gemini a pesquisa com Google Search tem cota zero. Com `PESQUISA_PROVIDER=ia`, a própria IA escreve o texto de referência com o seu conhecimento, e o aluno é avisado de que não há fontes da web. Com `gemini`, a busca é tentada primeiro e esta é a reserva | RF03, RNF04, D8 |
 
 ### Cuidados de acessibilidade para a interface de chat (Lumen)
 - Histórico de mensagens com `role="log"` (anúncio educado ao leitor de tela); anunciar a mensagem pronta, não cada pedaço do texto enquanto é gerado (WCAG 4.1.3).

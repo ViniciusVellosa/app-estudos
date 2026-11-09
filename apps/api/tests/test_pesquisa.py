@@ -190,3 +190,77 @@ def test_gemini_pesquisador_monta_a_chamada_com_google_search(monkeypatch):
     assert r.titulo == "Árvore B"
     assert capturado["model"] == "gemini-3.8-flash"
     assert capturado["config"].tools[0].google_search is not None
+
+
+# ------------------------------------------------------------ sem busca (D9)
+
+
+class ChatFalso:
+    """StructuredChat falso: devolve a referência pronta."""
+
+    def __init__(self, saida=None, erro=None):
+        self.saida, self.erro, self.chamadas = saida, erro, 0
+
+    def ask(self, system, user, output_model):
+        self.chamadas += 1
+        if self.erro:
+            raise self.erro
+        return output_model.model_validate(self.saida)
+
+
+def test_referencia_sem_busca_nao_tem_fontes_e_limpa_termos():
+    from app.services.pesquisa import ConhecimentoPesquisador
+
+    chat = ChatFalso({"titulo": "Árvore B", "termos": ["nó", "inventado"], "texto": TEXTO})
+    r = ConhecimentoPesquisador(chat).pesquisar("árvore B")
+    assert r.fontes == []
+    assert r.termos == ["nó"]
+
+
+def test_referencia_sem_busca_respeita_recusa():
+    from app.services.pesquisa import ConhecimentoPesquisador
+
+    with pytest.raises(AssuntoRecusado):
+        ConhecimentoPesquisador(ChatFalso({"recusa": "não é assunto de estudo"})).pesquisar("x")
+
+
+def test_falha_da_ia_vira_pesquisa_error():
+    from app.providers.base import GenerationError
+    from app.services.pesquisa import ConhecimentoPesquisador
+
+    with pytest.raises(PesquisaError):
+        ConhecimentoPesquisador(ChatFalso(erro=GenerationError("HTTP 429"))).pesquisar("x")
+
+
+def test_busca_que_falha_cai_na_referencia_sem_busca():
+    from app.services.pesquisa import ConhecimentoPesquisador, PesquisadorComReserva
+
+    web = PesquisadorFalso(erro=PesquisaError("HTTP 429"))
+    reserva = ConhecimentoPesquisador(ChatFalso({"titulo": "Árvore B", "termos": [], "texto": TEXTO}))
+    r = PesquisadorComReserva(web, reserva).pesquisar("árvore B")
+    assert web.chamadas == 1
+    assert r.titulo == "Árvore B" and r.fontes == []
+
+
+def test_recusa_na_busca_nao_tenta_a_reserva():
+    from app.services.pesquisa import PesquisadorComReserva
+
+    reserva = PesquisadorFalso(resultado=interpreta(RESPOSTA, FONTES))
+    with pytest.raises(AssuntoRecusado):
+        PesquisadorComReserva(PesquisadorFalso(erro=AssuntoRecusado("não")), reserva).pesquisar("x")
+    assert reserva.chamadas == 0
+
+
+def test_rota_marca_assunto_sem_fontes(client, auth):
+    from app.services.pesquisa import ConhecimentoPesquisador
+
+    app.state.pesquisador = ConhecimentoPesquisador(
+        ChatFalso({"titulo": "Árvore B", "termos": ["nó"], "texto": TEXTO})
+    )
+    try:
+        body = client.post("/v1/assuntos/reconhecer", json={"texto": "árvore B"}, headers=auth).json()
+    finally:
+        app.state.pesquisador = None
+    assert body["encontrado"] is True and body["pesquisado"] is True
+    assert body["fontes"] == []
+    assert body["conceito"]["discipline"] == "Escrito pela IA, sem fontes"

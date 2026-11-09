@@ -222,3 +222,23 @@ test("D8 — pesquisa que falha vira mensagem clara, sem detalhe técnico", asyn
   await expect(page.getByText(/Não consegui pesquisar esse assunto agora/)).toBeVisible();
   await expect(page.getByRole("button", { name: /Entrega confiável no TCP/ })).toBeVisible();
 });
+
+test("D9 — referência sem fontes avisa o aluno antes de explicar", async ({ page }) => {
+  await page.route("**/v1/assuntos/reconhecer", (rota) =>
+    rota.fulfill({
+      json: {
+        encontrado: true,
+        conceito: { slug: "web-redes-p2p", title: "Redes peer-to-peer", discipline: "Escrito pela IA, sem fontes" },
+        sugestoes: [],
+        pesquisado: true,
+        fontes: [],
+        motivo: null,
+      },
+    }),
+  );
+  await entrar(page);
+  await escrever(page, "redes peer to peer");
+  await expect(page.getByText(/sem fontes da web/)).toBeVisible();
+  await expect(page.getByText(/Combinado, vamos estudar Redes peer-to-peer/)).toBeVisible();
+  await semViolacoes(page);
+});

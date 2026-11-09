@@ -140,3 +140,27 @@ para 1 (`AUTOVERIFICACAO_PERGUNTAS`, de 1 a 6), e a verificação passa a custar
   mais arriscada (o prompt ordena por risco, priorizando o mecanismo), e o
   veredito continua comparando o rascunho inteiro com o texto-base.
 - Com cota disponível (plano pago), voltar a 3 é só mudar a variável.
+
+
+## Atualização (09/11/2026): referência sem busca na web (D9)
+
+No plano gratuito, a ferramenta Google Search da API do Gemini respondeu
+HTTP 429 mesmo sem nenhum uso no dia: a cota dela é zero nesse plano. Para que
+o app explique qualquer assunto sem depender de faturamento, a referência pode
+ser escrita pela própria IA, com o conhecimento dela (`PESQUISA_PROVIDER=ia`).
+Com `PESQUISA_PROVIDER=gemini`, a busca é tentada primeiro e esse modo é a
+reserva.
+
+- (+) Funciona com qualquer cota em que a IA funcione, sem custo extra de busca.
+- (−) Sem fonte externa, a autoverificação compara a IA com ela mesma: é o
+  caso em que a autocorreção mais falha (Huang et al., 2024). Mitigações: o
+  prompt manda deixar de fora o que não for consenso; o aluno é avisado, na
+  conversa, de que a explicação não tem fontes e deve ser conferida com o
+  material da disciplina; "Está errada" continua tirando a explicação de
+  circulação; com faturamento ativo, voltar para `gemini` restaura as fontes.
+
+Troca de modelo no mesmo dia: o Gemini 3.8 Flash tem, no plano gratuito,
+5 chamadas por minuto e 20 por dia; uma explicação com autoverificação faz 4.
+O projeto passou a usar o Gemini 3.5 Flash Lite (15 por minuto, 500 por dia),
+com a ressalva de que um modelo menor tende a ser reprovado mais vezes na
+autoverificação.
