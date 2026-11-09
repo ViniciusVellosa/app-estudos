@@ -1,0 +1,267 @@
+/* ------------------------------------------------------------------------
+   Estilo "vidro" (inspirado no Liquid Glass da Apple).
+
+   Camada separada de propósito: só aparência. Removendo o import em main.tsx,
+   o app volta ao visual anterior sem mudar nenhum comportamento.
+
+   Regras de acessibilidade que mandam aqui (RNF01, WCAG 2.2 AA):
+   - Texto nunca fica sobre vidro muito transparente: o fundo atrás do vidro
+     muda conforme a rolagem e o contraste não pode depender disso. As
+     superfícies com texto têm opacidade alta (72% a 85%) sobre um fundo
+     claro (ou escuro) e suave, e o contraste foi conferido no pior caso.
+   - O campo de digitação mantém a borda sólida de 3:1 (WCAG 1.4.11).
+   - Sem vidro no tema de alto contraste, para quem pede menos transparência
+     no sistema (prefers-reduced-transparency) e onde o navegador não suporta
+     o desfoque: nesses casos, superfícies sólidas como antes.
+   - Nada aqui se move: o fundo é estático (WCAG 2.3.3, persona Ana).
+   ------------------------------------------------------------------------ */
+
+:root {
+  --vidro: rgb(255 255 255 / 72%);
+  --vidro-forte: rgb(255 255 255 / 85%);
+  --vidro-borda: rgb(255 255 255 / 70%);
+  --vidro-contorno: rgb(15 27 45 / 10%);
+  --vidro-brilho: inset 0 1px 0 rgb(255 255 255 / 80%);
+  --vidro-sombra: 0 8px 32px rgb(18 73 156 / 12%), 0 1px 2px rgb(15 27 45 / 8%);
+  --vidro-desfoque: blur(22px) saturate(180%);
+  --vidro-aluno: rgb(18 73 156 / 12%);
+  --cena-base: #f2f6fd;
+  --cena-mancha-1: rgb(120 160 255 / 38%);
+  --cena-mancha-2: rgb(175 140 255 / 28%);
+  --cena-mancha-3: rgb(110 210 255 / 26%);
+}
+
+:root[data-theme="escuro"] {
+  --vidro: rgb(21 33 53 / 66%);
+  --vidro-forte: rgb(21 33 53 / 82%);
+  --vidro-borda: rgb(255 255 255 / 14%);
+  --vidro-contorno: rgb(0 0 0 / 30%);
+  --vidro-brilho: inset 0 1px 0 rgb(255 255 255 / 10%);
+  --vidro-sombra: 0 8px 32px rgb(0 0 0 / 40%);
+  --vidro-aluno: rgb(143 184 255 / 16%);
+  --cena-base: #0b1220;
+  --cena-mancha-1: rgb(60 100 220 / 30%);
+  --cena-mancha-2: rgb(120 80 220 / 22%);
+  --cena-mancha-3: rgb(30 150 210 / 18%);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="claro"]):not([data-theme="alto-contraste"]) {
+    --vidro: rgb(21 33 53 / 66%);
+    --vidro-forte: rgb(21 33 53 / 82%);
+    --vidro-borda: rgb(255 255 255 / 14%);
+    --vidro-contorno: rgb(0 0 0 / 30%);
+    --vidro-brilho: inset 0 1px 0 rgb(255 255 255 / 10%);
+    --vidro-sombra: 0 8px 32px rgb(0 0 0 / 40%);
+    --vidro-aluno: rgb(143 184 255 / 16%);
+    --cena-base: #0b1220;
+    --cena-mancha-1: rgb(60 100 220 / 30%);
+    --cena-mancha-2: rgb(120 80 220 / 22%);
+    --cena-mancha-3: rgb(30 150 210 / 18%);
+  }
+}
+
+/* ---------------------------------------------------------------- cena
+   O vidro precisa de algo atrás para desfocar: manchas de cor suaves, fixas.
+   Fica num pseudo-elemento fixo (e não em background-attachment: fixed, que
+   falha no Safari do iPhone). */
+body {
+  background: var(--cena-base);
+}
+
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(40rem 32rem at 8% 12%, var(--cena-mancha-1), transparent 70%),
+    radial-gradient(36rem 30rem at 92% 30%, var(--cena-mancha-2), transparent 70%),
+    radial-gradient(44rem 34rem at 50% 105%, var(--cena-mancha-3), transparent 70%),
+    var(--cena-base);
+}
+
+/* ---------------------------------------------------------------- vidro */
+.topo,
+.caixa-mensagem,
+.mensagem.aluno,
+.chip,
+.barra-sugestoes button.secundario,
+fieldset,
+.lista-universos li {
+  -webkit-backdrop-filter: var(--vidro-desfoque);
+  backdrop-filter: var(--vidro-desfoque);
+}
+
+/* Cabeçalho: barra de vidro fixa no topo, como nos apps da Apple. Só em
+   telas largas: no celular o menu quebra em duas ou três linhas e, fixo,
+   cobriria boa parte da conversa. */
+.topo {
+  background: var(--vidro-forte);
+  border-bottom: 1px solid var(--vidro-borda);
+  box-shadow: 0 1px 0 var(--vidro-contorno);
+}
+
+@media (min-width: 40rem) {
+  .topo {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+
+  /* Com o cabeçalho fixo, a rolagem do foco para abaixo dele (WCAG 2.4.11) */
+  html {
+    scroll-padding-top: 5rem;
+  }
+}
+
+/* Texto ampliado: cabeçalho fixo tomaria a tela (mesma regra do rodapé) */
+:root[data-ampliado="true"] .topo {
+  position: static;
+}
+
+@media (max-height: 32rem) {
+  .topo {
+    position: static;
+  }
+}
+
+/* Rodapé do chat: uma faixa de vidro fosco. O texto que rola por baixo fica
+   desfocado e encoberto; sem isso ele aparecia entre os botões e atrapalhava
+   a leitura (visto no celular, tema escuro). A faixa ocupa também as margens
+   laterais da coluna. */
+.rodape-chat {
+  background: var(--vidro-forte);
+  -webkit-backdrop-filter: var(--vidro-desfoque);
+  backdrop-filter: var(--vidro-desfoque);
+  margin-inline: -1rem;
+  padding-inline: 1rem;
+  border-top: 1px solid var(--vidro-borda);
+  border-radius: var(--raio-g) var(--raio-g) 0 0;
+  box-shadow: 0 -8px 24px var(--vidro-contorno);
+}
+
+.caixa-mensagem {
+  background: var(--vidro-forte);
+  /* a borda sólida fica: é o limite do campo (WCAG 1.4.11, 3:1) */
+  box-shadow: var(--vidro-brilho), var(--vidro-sombra);
+}
+
+/* Sugestões e ações secundárias: pílulas de vidro */
+.barra-sugestoes button.secundario {
+  background: var(--vidro-forte);
+  box-shadow: var(--vidro-brilho), 0 2px 10px var(--vidro-contorno);
+}
+
+/* Fala do aluno: bolha de vidro levemente azulada */
+.mensagem.aluno {
+  background: linear-gradient(var(--vidro-aluno), var(--vidro-aluno)), var(--vidro-forte);
+  border: 1px solid var(--vidro-borda);
+  box-shadow: var(--vidro-brilho), var(--vidro-sombra);
+}
+
+.chip {
+  background: var(--vidro-forte);
+  border: 1px solid var(--vidro-borda);
+  box-shadow: var(--vidro-brilho);
+}
+
+/* Formulários (Leitura, consentimento) e listas de dados: cartões de vidro */
+fieldset,
+.lista-universos li {
+  background: var(--vidro-forte);
+  border: 1px solid var(--vidro-borda);
+  border-radius: var(--raio-g);
+  box-shadow: var(--vidro-brilho), var(--vidro-sombra);
+}
+
+.lista-universos li {
+  padding: 0.5rem 0.5rem 0.5rem 1rem;
+}
+
+/* O título do grupo fica dentro do cartão, e não cortando a borda */
+fieldset {
+  padding: 1rem 1.25rem;
+}
+
+fieldset > legend {
+  float: left;
+  width: 100%;
+  padding: 0;
+  margin-bottom: 0.5rem;
+  font-weight: 700;
+}
+
+fieldset > legend + * {
+  clear: both;
+}
+
+/* Botão principal: leve brilho de vidro, mantendo a cor sólida (contraste) */
+button:not(.secundario, .texto, .perigo),
+.botao {
+  box-shadow: var(--vidro-brilho), 0 4px 14px rgb(18 73 156 / 25%);
+}
+
+/* ---------------------------------------------------------------- saídas
+   Onde o vidro sai de cena e tudo volta a ser sólido. */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  :root {
+    --vidro: var(--surface);
+    --vidro-forte: var(--surface);
+  }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  :root {
+    --vidro: var(--surface);
+    --vidro-forte: var(--surface);
+    --vidro-aluno: transparent;
+  }
+
+  body {
+    background: var(--bg);
+  }
+
+  body::before {
+    background: var(--bg);
+  }
+}
+
+/* Alto contraste: nada de transparência, desfoque, sombras nem manchas.
+   A cor da cena também muda: é ela que o axe (e o navegador, antes de
+   desenhar o pseudo-elemento) usa como fundo do texto. */
+:root[data-theme="alto-contraste"] {
+  --cena-base: #000000;
+}
+
+:root[data-theme="alto-contraste"] body::before {
+  background: #000000;
+}
+
+:root[data-theme="alto-contraste"] .topo,
+:root[data-theme="alto-contraste"] .rodape-chat,
+:root[data-theme="alto-contraste"] .caixa-mensagem,
+:root[data-theme="alto-contraste"] .mensagem.aluno,
+:root[data-theme="alto-contraste"] .chip,
+:root[data-theme="alto-contraste"] .barra-sugestoes button.secundario,
+:root[data-theme="alto-contraste"] fieldset,
+:root[data-theme="alto-contraste"] .lista-universos li,
+:root[data-theme="alto-contraste"] button,
+:root[data-theme="alto-contraste"] .botao {
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+  box-shadow: none;
+}
+
+:root[data-theme="alto-contraste"] .topo,
+:root[data-theme="alto-contraste"] .rodape-chat,
+:root[data-theme="alto-contraste"] .caixa-mensagem,
+:root[data-theme="alto-contraste"] .mensagem.aluno,
+:root[data-theme="alto-contraste"] .chip,
+:root[data-theme="alto-contraste"] .barra-sugestoes button.secundario,
+:root[data-theme="alto-contraste"] fieldset,
+:root[data-theme="alto-contraste"] .lista-universos li {
+  background: #000000;
+  border-color: #ffffff;
+}
