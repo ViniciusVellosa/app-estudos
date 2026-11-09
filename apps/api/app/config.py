@@ -26,6 +26,12 @@ class Settings(BaseSettings):
     explanation_provider: Literal["curated", "llm"] = "curated"
     llm_backend: Literal["anthropic", "openai_compatible"] = "anthropic"
     llm_model: str = ""
+    # Modelo só para ESCREVER a explicação (rascunho da analogia). Vazio = o
+    # mesmo LLM_MODEL. Permite um modelo maior onde a qualidade aparece para o
+    # aluno, e um modelo leve (com cota maior) na referência e na verificação,
+    # que fazem a maior parte das chamadas. Se ele bater no limite de uso, a
+    # explicação é escrita com LLM_MODEL.
+    llm_model_explicacao: str = ""
     llm_api_key: str = Field(default="", repr=False)
     llm_base_url: str = ""  # para servidores compatíveis com OpenAI (ex.: Ollama local)
     llm_timeout_s: float = 30.0

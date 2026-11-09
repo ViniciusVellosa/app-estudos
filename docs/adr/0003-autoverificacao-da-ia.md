@@ -164,3 +164,14 @@ Troca de modelo no mesmo dia: o Gemini 3.8 Flash tem, no plano gratuito,
 O projeto passou a usar o Gemini 3.5 Flash Lite (15 por minuto, 500 por dia),
 com a ressalva de que um modelo menor tende a ser reprovado mais vezes na
 autoverificação.
+
+
+## Atualização (09/11/2026): modelo maior só para a analogia
+
+Com o Gemini 3.5 Flash Lite, as analogias saíam genéricas ("navios piratas"
+em vez de elementos de One Piece). A explicação passou a ter modelo próprio
+(`LLM_MODEL_EXPLICACAO`, hoje o Gemini 3.8 Flash), enquanto a referência e a
+autoverificação continuam no modelo leve, que faz a maior parte das chamadas.
+Se o modelo da explicação bater no limite de uso, a explicação é escrita com o
+modelo leve. O prompt passou a pedir elementos próprios do universo, só os de
+que o modelo tem certeza, já que um erro sobre o universo reprova a explicação.

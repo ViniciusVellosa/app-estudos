@@ -34,6 +34,7 @@ Segurança (OWASP Top 10 para aplicações com LLM, 2025):
 from __future__ import annotations
 
 import json
+import logging
 from functools import lru_cache
 from pathlib import Path
 from xml.sax.saxutils import escape, quoteattr
@@ -43,6 +44,8 @@ from pydantic import BaseModel, ConfigDict, ValidationError
 from app.config import Settings, get_settings
 from app.providers.base import ExplanationRequestData, GenerationError, M
 from app.schemas import ExplanationPayload, Refusal
+
+log = logging.getLogger(__name__)
 
 PROMPT_PATH = Path(__file__).resolve().parent.parent / "prompts" / "explicacao_sistema.md"
 
@@ -70,6 +73,9 @@ def user_message(req: ExplanationRequestData) -> str:
     parts = [
         f"<texto_base>\n{escape(req.concept.base_text)}\n</texto_base>",
         f"<conceito>{escape(req.concept.title)}</conceito>",
+        # O validador exige ao menos dois destes na reformulação técnica; sem
+        # a lista, o modelo acertava por sorte (log de 09/11: reprovado por isso).
+        f"<termos_chave>{escape('; '.join(req.concept.key_terms))}</termos_chave>",
         f"<nivel>{escape(req.level)}</nivel>",
         f"<interesse rotulo={quoteattr(req.interest_label)} profundidade=\"{req.depth}\"/>",
     ]
@@ -112,10 +118,10 @@ class AnthropicGenerator:
         )
         self.settings = settings
 
-    def ask(self, system: str, user: str, output_model: type[M]) -> M:
+    def ask(self, system: str, user: str, output_model: type[M], model: str | None = None) -> M:
         try:
             response = self.client.messages.parse(
-                model=self.settings.llm_model,
+                model=model or self.settings.llm_model,
                 max_tokens=self.settings.llm_max_output_tokens,
                 system=system,
                 messages=[{"role": "user", "content": user}],
@@ -132,7 +138,7 @@ class AnthropicGenerator:
         return response.parsed_output
 
     def generate(self, req: ExplanationRequestData) -> ExplanationPayload | Refusal:
-        return self.ask(system_prompt(), user_message(req), GenerationResult).resultado
+        return gerar_explicacao(self, req)
 
 
 class OpenAICompatibleGenerator:
@@ -153,7 +159,7 @@ class OpenAICompatibleGenerator:
         )
         self.settings = settings
 
-    def ask(self, system: str, user: str, output_model: type[M]) -> M:
+    def ask(self, system: str, user: str, output_model: type[M], model: str | None = None) -> M:
         """Pede a resposta já no formato do modelo Pydantic.
 
         Usa `chat.completions.parse`, o auxiliar do SDK que monta o
@@ -167,7 +173,7 @@ class OpenAICompatibleGenerator:
             extras["reasoning_effort"] = self.settings.llm_reasoning_effort
         try:
             resp = self.client.chat.completions.parse(
-                model=self.settings.llm_model,
+                model=model or self.settings.llm_model,
                 max_tokens=self.settings.llm_max_output_tokens,
                 temperature=0,
                 response_format=output_model,
@@ -198,7 +204,26 @@ class OpenAICompatibleGenerator:
             raise GenerationError(f"resposta fora do formato: {exc.error_count()} erro(s)") from exc
 
     def generate(self, req: ExplanationRequestData) -> ExplanationPayload | Refusal:
-        return self.ask(system_prompt(), user_message(req), GenerationResult).resultado
+        return gerar_explicacao(self, req)
+
+
+def gerar_explicacao(gen, req: ExplanationRequestData) -> ExplanationPayload | Refusal:
+    """Escreve a explicação com LLM_MODEL_EXPLICACAO, ou LLM_MODEL se vazio.
+
+    O modelo da explicação costuma ser o de cota menor. Se ele bater no limite
+    de uso (HTTP 429), a explicação sai com o modelo principal em vez de cair
+    direto na explicação padrão: o aluno ganha uma analogia mais simples, mas
+    ganha uma analogia.
+    """
+    principal = gen.settings.llm_model
+    modelo = gen.settings.llm_model_explicacao or principal
+    try:
+        return gen.ask(system_prompt(), user_message(req), GenerationResult, model=modelo).resultado
+    except GenerationError as exc:
+        if modelo == principal or "429" not in str(exc):
+            raise
+        log.warning("limite de uso em %s; escrevendo a explicação com %s", modelo, principal)
+        return gen.ask(system_prompt(), user_message(req), GenerationResult, model=principal).resultado
 
 
 def build_llm_generator(settings: Settings | None = None):
