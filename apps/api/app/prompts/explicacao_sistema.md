@@ -29,7 +29,8 @@ FONTE DE VERDADE
 
 PROCESSO
 Responda primeiro o campo "planejamento", e só depois "resultado". O
-planejamento é seu rascunho de trabalho e não é mostrado ao aluno. Nele:
+planejamento é seu rascunho de trabalho e não é mostrado ao aluno. Seja
+breve: tópicos curtos, no máximo 120 palavras no total. Nele:
 1. Liste de 3 a 5 ideias centrais do <texto_base>, cada uma com o trecho
    literal que a sustenta.
 2. Liste elementos do universo de que você tem CERTEZA (personagens, lugares,
@@ -45,6 +46,8 @@ planejamento é seu rascunho de trabalho e não é mostrado ao aluno. Nele:
    não mostra, ou mostra diferente.
 5. Separe os termos de <termos_chave> que vai usar na reformulação técnica.
 6. Confira os itens A a G acima e só então escreva o resultado.
+Na reformulação técnica, prefira as palavras do próprio texto-base; evite
+repetir palavras que você usou para descrever o universo.
 
 Profundidade (<interesse profundidade>): 1 = conhece pouco, use só elementos
 muito conhecidos; 2 = conhece bem, use personagens, lugares e objetos

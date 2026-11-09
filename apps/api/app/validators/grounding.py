@@ -72,13 +72,42 @@ def quote_in_source(quote: str, source: str) -> bool:
     return SequenceMatcher(None, window, q, autojunk=False).ratio() >= QUOTE_MIN_SIMILARITY
 
 
+# Palavras comuns da língua que aparecem em qualquer texto e não identificam
+# universo nenhum. Sem esta lista, "direta" e "forma" num mapeamento de Marvel
+# reprovavam uma reformulação técnica correta (log de 09/11/2026).
+PALAVRAS_COMUNS = {
+    "como", "para", "pela", "pelo", "pelas", "pelos", "sobre", "entre", "cada",
+    "todo", "toda", "todos", "todas", "outro", "outra", "outros", "outras",
+    "mesmo", "mesma", "quando", "onde", "isso", "esse", "essa", "este", "esta",
+    "forma", "modo", "maneira", "parte", "partes", "tipo", "tipos", "vez", "vezes",
+    "direta", "direto", "diretamente", "indireta", "indireto", "simples", "unico",
+    "unica", "varios", "varias", "muito", "muitos", "pouco", "poucos", "grande",
+    "grandes", "pequeno", "pequena", "novo", "nova", "primeiro", "primeira",
+    "sempre", "nunca", "ainda", "apenas", "somente", "tambem", "depois", "antes",
+    "propria", "proprio", "proprias", "proprios", "possui", "possuem",
+    "pode", "podem", "deve", "devem", "fazer", "faz", "fazem", "usar", "usa",
+    "usam", "uso", "ter", "tem", "sendo", "estar", "estao", "seus",
+    "suas", "dele", "dela", "deles", "delas", "nosso", "nossa", "alguns",
+    "algumas", "qualquer", "nenhum", "nenhuma", "sem", "com", "ate",
+}
+
+
 def universe_terms(payload: ExplanationPayload, base_text: str) -> set[str]:
-    """Palavras do universo do aluno que não pertencem ao texto-base."""
-    base_words = set(normalize(base_text).split())
+    """Palavras próprias do universo do aluno.
+
+    Uma palavra do lado "universo" do mapeamento só conta como do universo se
+    não estiver no texto-base, não for palavra comum da língua e não aparecer
+    nas partes técnicas que o próprio modelo escreveu sem analogia (conceito e
+    coluna técnica do mapeamento): se ele a usou ali, ela é vocabulário geral.
+    """
+    neutras = set(normalize(base_text).split())
+    neutras |= set(normalize(payload.conceito).split())
+    for row in payload.mapeamento:
+        neutras |= set(normalize(row.tecnico).split())
     words: set[str] = set()
     for row in payload.mapeamento:
         for w in normalize(row.universo).split():
-            if len(w) >= 4 and w not in base_words:
+            if len(w) >= 4 and w not in neutras and w not in PALAVRAS_COMUNS:
                 words.add(w)
     return words
 

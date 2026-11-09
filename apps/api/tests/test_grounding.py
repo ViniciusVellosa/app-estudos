@@ -94,3 +94,20 @@ def test_schema_requires_all_six_steps(good):
 )
 def test_quote_matching(concept, quote, expected):
     assert quote_in_source(quote, concept.base_text) is expected
+
+
+def test_palavras_comuns_nao_contam_como_do_universo(concept, good):
+    """Log de 09/11: "direta" e "forma" num mapeamento de Marvel reprovavam."""
+    payload = good.model_copy(deep=True)
+    payload.mapeamento[0].universo = "Tony Stark fala de forma direta com a armadura"
+    payload.reformulacao_tecnica += " A comunicação ocorre de forma direta."
+    report = validate_explanation(payload, concept.rules)
+    assert not any("termos do universo" in e for e in report.errors)
+
+
+def test_nome_proprio_do_universo_ainda_e_barrado(concept, good):
+    payload = good.model_copy(deep=True)
+    payload.mapeamento[0].universo = "Tony Stark envia bolas numeradas"
+    payload.reformulacao_tecnica += " Como Stark faria."
+    report = validate_explanation(payload, concept.rules)
+    assert any("stark" in e for e in report.errors)
