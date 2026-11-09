@@ -51,9 +51,18 @@ PROMPT_PATH = Path(__file__).resolve().parent.parent / "prompts" / "explicacao_s
 
 
 class GenerationResult(BaseModel):
-    """Envelope único: explicação nos seis passos OU recusa."""
+    """Envelope único: planejamento, depois a explicação OU a recusa.
+
+    "planejamento" vem ANTES de "resultado" de propósito: modelos geram os
+    campos na ordem do schema, então o modelo planeja (ideias do texto-base,
+    elementos do universo, conferência dos critérios) antes de escrever. É a
+    técnica Chain-of-Thought (Wei et al., 2022) aplicada à saída estruturada.
+    O planejamento não é guardado nem mostrado ao aluno.
+    """
 
     model_config = ConfigDict(extra="forbid")
+    # default só para tolerar um modelo que pule o campo; o prompt o pede
+    planejamento: str = ""
     resultado: ExplanationPayload | Refusal
 
 

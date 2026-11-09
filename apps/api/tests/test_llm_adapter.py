@@ -166,3 +166,17 @@ def test_sem_modelo_proprio_usa_o_principal():
     g = _GeradorFalso("leve", "")
     gerar_explicacao(g, req())
     assert g.modelos == ["leve"]
+
+
+def test_planejamento_vem_antes_do_resultado_no_schema():
+    """A ordem dos campos faz o modelo planejar antes de escrever (CoT)."""
+    campos = list(GenerationResult.model_json_schema()["properties"])
+    assert campos.index("planejamento") < campos.index("resultado")
+
+
+def test_prompt_traz_os_criterios_de_avaliacao_e_um_exemplo():
+    from app.providers.llm import system_prompt
+
+    p = system_prompt()
+    for trecho in ("COMO SUA RESPOSTA SERÁ AVALIADA", "PROCESSO", "EXEMPLO", "LEMBRETE FINAL"):
+        assert trecho in p

@@ -175,3 +175,22 @@ autoverificação continuam no modelo leve, que faz a maior parte das chamadas.
 Se o modelo da explicação bater no limite de uso, a explicação é escrita com o
 modelo leve. O prompt passou a pedir elementos próprios do universo, só os de
 que o modelo tem certeza, já que um erro sobre o universo reprova a explicação.
+
+## Atualização (09/11/2026): prompt da explicação reescrito com técnicas de engenharia de prompt
+
+As reprovações vinham de regras que o modelo não conhecia (afirmação fora do
+texto-base, termos-chave ausentes). O prompt passou a usar:
+
+- **critérios de avaliação explícitos** (itens A a G), espelhando a
+  autoverificação e os validadores: o modelo sabe como será julgado;
+- **planejamento antes da resposta** (Chain-of-Thought, Wei et al., 2022): um
+  campo `planejamento` vem antes de `resultado` no schema, e o modelo lista
+  ideias do texto-base, elementos do universo e o limite da analogia antes de
+  escrever. O campo não é guardado nem mostrado;
+- **um exemplo completo** (few-shot), com o conceito do TCP e o universo do
+  futebol, avisando que é modelo de formato, não de conteúdo;
+- **decomposição** da tarefa em passos e **lembrete final** com o checklist.
+
+Fontes: Wei et al. (2022), *Chain-of-Thought Prompting Elicits Reasoning in
+Large Language Models*; Carraro, *Inteligência Artificial e ChatGPT* (Casa do
+Código), cap. 7; Vellosa, *Engenharia de Prompt Avançada* (UNIARA).
