@@ -168,3 +168,15 @@ test("a numeração das partes não aparece na tela, mas existe para quem ouve",
   // e nenhum "Passo N de 6" sobrou na interface
   await expect(page.getByText(/Passo \d de \d/)).toHaveCount(0);
 });
+
+test("tema escuro, com o estilo vidro, sem violações do axe", async ({ page }) => {
+  await entrar(page);
+  await page.getByRole("button", { name: "Leitura" }).click();
+  await page.getByLabel("Escuro").check();
+  await page.getByRole("button", { name: "Salvar preferências" }).click();
+  await semViolacoes(page);
+  await page.getByRole("button", { name: "Voltar para a conversa" }).click();
+  await pedirExplicacao(page);
+  await avancarAte(page, 4);
+  await semViolacoes(page);
+});

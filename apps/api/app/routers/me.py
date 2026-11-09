@@ -49,7 +49,7 @@ def list_interests(user: ConsentedUser):
 @router.post("/me/interests", response_model=InterestOut, status_code=201)
 def add_interest(body: InterestIn, user: ConsentedUser, db: DbDep):
     if len(user.interests) >= 5:
-        raise HTTPException(status.HTTP_400_BAD_REQUEST, "Limite de 5 interesses.")
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, "Você já tem 5 universos guardados. Remova um em “Meus dados” para usar outro.")
     interest = Interest(user_id=user.id, label=body.label.strip(), depth=body.depth)
     db.add(interest)
     db.commit()

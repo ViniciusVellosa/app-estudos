@@ -78,6 +78,10 @@ export function Chat({
   const [interesse, setInteresse] = useState<Interest | null>(null);
   const [explicacao, setExplicacao] = useState<Explanation | null>(null);
   const [parteAtual, setParteAtual] = useState(0);
+  // H7 / persona Caio (avaliação heurística, P06): quem escolhe a versão
+  // técnica continua nela nas partes seguintes, em vez de clicar de novo a
+  // cada parte. Volta à comparação com o mesmo botão.
+  const [modoTecnico, setModoTecnico] = useState(false);
   const [mensagens, setMensagens] = useState<Mensagem[]>(() => [boasVindas()]);
   const [sugestoes, setSugestoes] = useState<Sugestao[]>(() => sugestoesDeAssunto(concepts));
   const [texto, setTexto] = useState("");
@@ -224,7 +228,7 @@ export function Chat({
   function mensagensDaExplicacao(e: Explanation, parte: number): Mensagem[] {
     const msgs: Mensagem[] = [];
     if (e.notice) msgs.push({ id: novoId(), papel: "app", tipo: "aviso", texto: e.notice });
-    msgs.push({ id: novoId(), papel: "app", tipo: "parte", parte, explicacao: e, tecnica: false });
+    msgs.push({ id: novoId(), papel: "app", tipo: "parte", parte, explicacao: e, tecnica: modoTecnico && temVersaoTecnica(e, parte) });
     return msgs;
   }
 
@@ -276,13 +280,21 @@ export function Chat({
     if (!explicacao || parteAtual >= total) return;
     const n = parteAtual + 1;
     setParteAtual(n);
-    acrescenta({ id: novoId(), papel: "app", tipo: "parte", parte: n, explicacao, tecnica: false });
+    acrescenta({
+      id: novoId(),
+      papel: "app",
+      tipo: "parte",
+      parte: n,
+      explicacao,
+      tecnica: modoTecnico && temVersaoTecnica(explicacao, n),
+    });
     setStatus(`${tituloDaParte(explicacao, n)}${posicaoDaParte(explicacao, n)}.`);
   }
 
   function alternarTecnica() {
     if (!ultimaParte) return;
     const id = ultimaParte.id;
+    setModoTecnico(!ultimaParte.tecnica);
     setMensagens((m) =>
       m.map((msg) => (msg.id === id && msg.tipo === "parte" ? { ...msg, tecnica: !msg.tecnica } : msg)),
     );
@@ -301,6 +313,7 @@ export function Chat({
     setConceito(null);
     setExplicacao(null);
     setParteAtual(0);
+    setModoTecnico(false);
     setModo("assunto");
     setSugestoes(sugestoesDeAssunto(concepts));
     setStatus("Escolha outro conteúdo.");
@@ -427,7 +440,7 @@ export function Chat({
                         Continuar este conteúdo
                       </button>
                       <button type="button" className="secundario" onClick={outroConteudo}>
-                        Escolher outro conteúdo
+                        Estudar outro conteúdo
                       </button>
                     </div>
                   )}

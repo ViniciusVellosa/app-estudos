@@ -112,7 +112,7 @@ export default function App() {
                   Voltar para a conversa
                 </button>
               )}
-              <button type="button" className="texto" aria-current={screen === "preferencias" ? "page" : undefined} onClick={() => go("preferencias")}>Leitura</button>
+              <button type="button" className="texto" aria-current={screen === "preferencias" ? "page" : undefined} onClick={() => go("preferencias")}>Leitura e cores</button>
               <button type="button" className="texto" aria-current={screen === "meus-dados" ? "page" : undefined} onClick={() => go("meus-dados")}>Meus dados</button>
             </nav>
           )}
@@ -190,7 +190,6 @@ function Consent({ onAccept }: { onAccept: () => Promise<void> }) {
         <li>Usamos os interesses apenas para adaptar as explicações. Se a explicação for gerada por IA, só o nome do interesse é enviado, nunca algo que identifique você.</li>
         <li>Você pode ver, mudar ou apagar tudo a qualquer momento em “Meus dados”.</li>
       </ul>
-      <p className="dica">Este texto é um modelo: adapte-o ao termo de consentimento aprovado no seu projeto.</p>
       <label>
         <input type="checkbox" checked={checked} onChange={(e) => setChecked(e.target.checked)} /> Li e concordo
       </label>

@@ -1,5 +1,9 @@
 # Protocolo do teste de usabilidade — Etapa 4 (Avaliar)
 
+> **Atualizado em 09/11/2026 para a interface de chat** (decisões D3 e D7): o
+> aluno escreve o assunto e o universo na conversa; há uma sexta tarefa (T6). Em
+> 09/11 este teste **ainda não tinha sido aplicado** (ver `resultados.md`).
+
 | | |
 |---|---|
 | Tipo | Moderado, think-aloud concorrente. Objetivo **formativo**: achar problemas, não provar que o app é bom |
@@ -24,7 +28,7 @@
 
 ## 0. Antes do dia
 
-- [ ] App rodando e estável nas cinco tarefas (`docker compose up --wait`, ou
+- [ ] App rodando e estável nas seis tarefas (`docker compose up --wait`, ou
       `uv run uvicorn` + `npm run dev`)
 - [ ] **Avaliação heurística feita e os problemas de severidade 3 e 4 corrigidos.**
       Esta ordem não é burocracia: é desperdício gastar a sessão de um participante
@@ -37,6 +41,12 @@
       arquivo digital
 - [ ] Planilha de registro aberta, com códigos P1, P2…
 - [ ] SUS pronto no formato escolhido (`sus.md`)
+- [ ] **Analogias prontas para o universo de cada participante.** No modo
+      pré-gravado só existe a de futebol; os outros universos recebem a
+      explicação padrão e a tarefa T2 perde o sentido (percurso cognitivo, P12).
+      Pergunte o universo no convite e escreva a explicação antes, no formato de
+      `apps/api/content/explanations/tcp-entrega-confiavel/futebol.json`, ou use
+      a IA com cota suficiente para as sessões
 
 ### Se algum participante usa ampliação ou leitor de tela
 
@@ -104,10 +114,10 @@ calada; **nunca** corrija o uso.
 
 ---
 
-## 2. As cinco tarefas
+## 2. As seis tarefas
 
 Leia a tarefa em voz alta, entregue o cartão, comece a cronometrar no "pode
-começar". As tarefas vêm de `../etapa-2-personas-cenarios/cenarios.md`.
+começar". As tarefas vêm de `../etapa-2-personas-cenarios/cenarios.docx`.
 
 > **O texto lido não menciona nome de botão.** Dizer "clique em ver sem comparação"
 > entrega a resposta e destrói a medida — o que T3 mede é se a pessoa **acha**
@@ -119,7 +129,7 @@ começar". As tarefas vêm de `../etapa-2-personas-cenarios/cenarios.md`.
 > explicação de um conceito."
 
 - **Sucesso:** chega à explicação sem ajuda, tendo passado pelo consentimento e
-  informado um interesse.
+  escrito no chat o assunto e o universo.
 - **Parcial:** chega, mas precisa de uma dica.
 - **Observar:** entende o que o consentimento pede? Trava em algum passo? Os campos
   são legíveis? → RF01, RF02
@@ -160,6 +170,16 @@ começar". As tarefas vêm de `../etapa-2-personas-cenarios/cenarios.md`.
 - **Sucesso:** encontra o caminho de reportar.
 - **Observar:** espera que isso exista? Confia que serve pra algo? → RF05, DP10
 
+### T6 — Tirar uma dúvida
+
+> "Você ficou com uma dúvida sobre o conteúdo. Pergunta pro app. Depois,
+> pergunta algo que não tem nada a ver com a matéria."
+
+- **Sucesso:** faz a pergunta pelo campo do chat e, diante da recusa, encontra
+  uma saída ("Continuar este conteúdo" ou "Estudar outro conteúdo").
+- **Observar:** entende por que o app recusou? Fica frustrado ou acha razoável?
+  → RF11, D5
+
 ### SEQ — depois de **cada** tarefa
 
 Uma pergunta, imediatamente, antes de passar à seguinte:
@@ -198,6 +218,7 @@ Conhecimento prévio de TCP (1-5): ___   Universo informado: ___________
 | T3     |                 |       |       |           |            |
 | T4     |                 |       |       |           |            |
 | T5     |                 |       |       |           |            |
+| T6     |                 |       |       |           |            |
 
 Frase do T2 ("o que o TCP faz?"), literal:
 _________________________________________________

@@ -4,7 +4,7 @@
 |---|---|
 | Avaliadores | **Os integrantes do grupo** — 3 a 5 pessoas |
 | Como | Cada um avalia **sozinho primeiro**, depois o grupo consolida |
-| Objeto | O app em `apps/web`, versão [preencher: hash do commit] |
+| Objeto | O app em `apps/web`, versão `54c6a6d` (ver o resultado abaixo) |
 | Percurso | As mesmas tarefas T1 a T5 do teste (`protocolo-teste.md`) |
 | Tempo | 40 a 60 min por avaliador, mais 30 min de consolidação |
 
@@ -94,6 +94,43 @@ coluna, e às vezes a melhor solução não é a primeira que vem à cabeça.
 - [ ] Anotar o hash do commit da versão que vai para o teste
 
 ---
+
+## Resultado da avaliação (09/11/2026)
+
+| | |
+|---|---|
+| Avaliador | **Avaliação por especialista com apoio de IA** (Claude, com a skill Lumen de IHC e acessibilidade), a ser **revisada pelos integrantes do grupo**. Não substitui a recomendação de 3 a 5 avaliadores independentes; os integrantes devem conferir cada item e acrescentar o que acharem |
+| Versão avaliada | commit `54c6a6d` (estilo vidro), em modo pré-gravado (`EXPLANATION_PROVIDER=curated`) e com IA (Gemini) |
+| Percurso | tarefas T1 a T6 (`protocolo-teste.md`), no celular (Pixel 7) e no computador (1280 px), nos temas claro, escuro e alto contraste, e a 320 px com texto "Enorme" |
+| Evidências | capturas em `evidencias/` (o nome do arquivo indica dispositivo e passo) |
+
+### Problemas encontrados
+
+| ID | Problema | Heurística | Evidência | Sev. | Situação |
+|---|---|---|---|---|---|
+| **P03** | O termo de consentimento mostrava ao usuário uma nota de desenvolvimento: "Este texto é um modelo: adapte-o ao termo aprovado no seu projeto". Confunde e tira credibilidade justamente na tela que pede confiança | H8, H2 | `desktop-01-consentimento.jpg` | **3** | **Corrigido** |
+| **P04** | O menu chamava "Leitura", e nada indicava que tamanho do texto e cores ficavam ali. A tarefa T4 ("deixe a tela mais confortável") depende de achar esse menu | H6, H10 | `desktop-11-leitura.jpg` | **3** | **Corrigido**: "Leitura e cores" |
+| **P05** | Quem escolhia a versão técnica voltava para a analogia a cada parte nova e precisava clicar de novo em todas. Atinge diretamente a persona Caio, que prefere a linguagem técnica | H7, H3 | `desktop-07-versao-tecnica.jpg` | **3** | **Corrigido**: a escolha vale para as partes seguintes (DD39) |
+| P01 | A 320 px com texto "Enorme", o símbolo ocupava metade da linha e o nome do app quebrava em sílabas ("Estu-dos"); o menu ocupa toda a primeira tela | A1, H8 | `desktop-13-320px-texto-enorme-alto-contraste.jpg` | 2 | **Corrigido em parte**: símbolo menor e nome sem hifenização. O menu ainda ocupa a primeira tela; o link "Pular para o conteúdo" atenua. Melhoria futura: menu recolhível |
+| P02 | "Está errada" só responde "Obrigado, vamos conferir": não pergunta o que está errado e a explicação continua na tela, sem dizer o que acontece com ela | IA1, H1 | `desktop-08-esta-errada.jpg` | 2 | Registrado |
+| P06 | O progresso ("parte 3 de 6") só é anunciado ao leitor de tela; quem enxerga não sabe quantas partes faltam | H1 | `desktop-05-parte-1.jpg` | 2 | **Mantido** por decisão anterior (DD19 tirou o contador da tela). Observar no teste com usuários |
+| P07 | No modo com IA, a espera pode passar de um minuto e só aparece "Preparando e conferindo a explicação", sem estimativa | H1 | — (log da API) | 2 | Registrado. No modo pré-gravado a resposta é imediata |
+| P08 | "Nova conversa" apaga a conversa atual sem confirmação nem como desfazer | H3, H5 | `desktop-05-parte-1.jpg` | 2 | Registrado |
+| P09 | Ao chegar a 5 universos, o erro dizia só "Limite de 5 interesses.", sem dizer como liberar espaço | H9 | — | 2 | **Corrigido**: "Você já tem 5 universos guardados. Remova um em “Meus dados” para usar outro." |
+| P12 | No modo pré-gravado só há analogia pronta para "futebol"; outro universo recebe a explicação padrão (com aviso) | H2, C1 | `desktop-05-parte-1.jpg` | 2 | Registrado. Para o teste: perguntar o universo no convite e preparar a explicação, ou usar a IA |
+| P14 | A explicação pré-gravada do TCP diz, em "onde a comparação falha", que a janela "muda pelo controle de fluxo e de congestionamento", algo que o texto de referência não afirma. A regra que a IA precisa seguir (D6) não foi seguida pelo conteúdo escrito à mão | H2, IA1 | `desktop-06-onde-a-comparacao-falha.jpg` | 2 | Registrado: revisar o conteúdo ou acrescentar o fato ao texto de referência |
+| P15 | Em "Fora deste conteúdo", o botão "Continuar este conteúdo" só leva o foco ao campo; não fica claro que algo aconteceu | H1 | `desktop-09-pergunta-fora-do-conteudo.jpg` | 2 | Registrado (achado no percurso cognitivo) |
+| P10 | "Ir para a última mensagem" fica sempre visível, mesmo quando a última mensagem já está na tela | H8 | `desktop-05-parte-1.jpg` | 1 | Registrado |
+| P11 | A mesma ação tinha dois nomes: "Escolher outro conteúdo" (na recusa) e "Estudar outro conteúdo" (no fim da explicação) | H4 | `desktop-09-pergunta-fora-do-conteudo.jpg` | 1 | **Corrigido**: "Estudar outro conteúdo" nos dois |
+
+**Resumo:** 14 problemas; nenhum de severidade 4; os **3 de severidade 3 foram corrigidos** antes de qualquer teste com usuários, como o método pede; dos 9 de severidade 2, 2 foram corrigidos (P01 em parte, P09) e 7 ficaram registrados; dos 2 de severidade 1, 1 foi corrigido. Depois das correções, os 106 testes da API e os 44 testes de ponta a ponta (com verificação automática de acessibilidade) passam.
+
+### Pontos fortes observados
+
+- **Controle do usuário sobre a personalização** (H3, DP05): versão técnica a um toque, troca de universo dentro da explicação, explicação padrão como reserva.
+- **Transparência da IA** (IA1): aviso de explicação adaptada, aviso de referência sem fontes (DD37), fontes exibidas quando há pesquisa na web, "Está errada" em toda parte.
+- **Prevenção de erros de conteúdo** (H5): autoverificação e validadores barram explicação errada antes de chegar ao aluno.
+- **Recuperação** (H9): assunto fora da biblioteca e pergunta fora do conteúdo nunca terminam em beco sem saída; há sempre sugestões.
 
 ## O que este método não faz
 

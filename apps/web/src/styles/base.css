@@ -95,6 +95,18 @@ a {
   gap: var(--e2);
 }
 
+/* Avaliação heurística P01: a 320px com texto "Enorme", o símbolo tomava
+   metade da linha e o nome quebrava em sílabas ("Estu-dos"). Com texto
+   ampliado, o símbolo encolhe e o nome não é hifenizado. */
+.marca span {
+  hyphens: manual;
+}
+
+:root[data-ampliado="true"] .simbolo {
+  width: 2.3em;
+  height: 1.5em;
+}
+
 /* Símbolo do app (components/Simbolo.tsx). Em em: cresce com o texto. */
 .simbolo {
   width: 3.75em;

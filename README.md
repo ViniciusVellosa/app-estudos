@@ -85,7 +85,9 @@ O trabalho segue o ciclo de design centrado no usuário (ISO 9241-210):
 | **1. Pesquisa com usuários** | Plano de pesquisa, questionário e síntese dos resultados (n = 5) | Concluída |
 | **2. Personas e cenários** | Personas, análise PACT, cenários e tarefas de teste | Concluída |
 | **3. Prototipação** | Esboços de baixa fidelidade, decisões de design e o aplicativo funcional como protótipo de alta fidelidade | Concluída |
-| **4. Avaliação** | Protocolo do teste de usabilidade, questionário SUS, avaliação heurística e auditoria WCAG | Em andamento |
+| **4. Avaliação** | Avaliação heurística, percurso cognitivo com as personas e auditoria WCAG 2.2, com correções aplicadas; protocolo do teste de usabilidade e SUS prontos | Avaliação analítica concluída; teste com usuários pendente |
+
+O **relatório final** do projeto está em [`docs/relatorio-final.docx`](docs/relatorio-final.docx), e a avaliação da Etapa 4 em [`docs/etapa-4-avaliacao/avaliacao-etapa-4.docx`](docs/etapa-4-avaliacao/avaliacao-etapa-4.docx).
 
 Cada documento indica a origem do que afirma (dado da pesquisa, literatura ou
 hipótese da equipe), formando uma cadeia de rastreabilidade do achado da

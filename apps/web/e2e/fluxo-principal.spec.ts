@@ -93,10 +93,10 @@ test("T3 — achar a versão técnica sem perder o ponto atual", async ({ page }
   await botaoContinuar(page).click();
   await expect(parte(page, 4)).toBeVisible();
 
-  // a parte 3 fica no histórico como foi lida, em versão técnica, e sem
-  // botões: mensagem antiga é leitura, não controle
-  await expect(page.getByRole("log").getByText("Sem comparação", { exact: true })).toBeVisible();
-  await expect(page.getByRole("button", { name: "Voltar para a comparação" })).toHaveCount(0);
+  // quem escolheu a versão técnica continua nela na parte seguinte, e o mesmo
+  // botão volta para a comparação (P06 da avaliação heurística, persona Caio)
+  await expect(page.getByRole("log").getByText("Sem comparação", { exact: true }).first()).toBeVisible();
+  await expect(page.getByRole("button", { name: "Voltar para a comparação" })).toHaveAttribute("aria-pressed", "true");
 });
 
 test("T4 — ajustar a leitura no meio da explicação, sem perder a conversa", async ({ page }) => {
@@ -137,7 +137,7 @@ test("T6 — perguntar fora do conceito e receber recusa com saída", async ({ p
   await expect(page.getByText(/Só consigo responder sobre/)).toBeVisible();
   // duas saídas explícitas: nunca um beco sem saída (DD05)
   await expect(page.getByRole("button", { name: "Continuar este conteúdo" })).toBeVisible();
-  await expect(page.getByRole("button", { name: "Escolher outro conteúdo" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Estudar outro conteúdo" })).toBeVisible();
   // e as ações da explicação continuam ao alcance depois da pergunta
   await expect(page.getByRole("button", { name: "Ver versão técnica" })).toBeVisible();
   await semViolacoes(page);

@@ -22,8 +22,8 @@ O ciclo da disciplina é **Entender → Desenhar → Avaliar**. Cada pasta é um
 |---|---|---|---|
 | **1. Pesquisa com usuários** *(Entender)* | [`etapa-1-pesquisa/`](etapa-1-pesquisa/) | Plano de pesquisa, instrumento do questionário e síntese dos resultados (.docx); base anonimizada R01–R05 | Concluída: n = 5, coleta de 02 a 07/11 |
 | **2. Personas e cenários** *(Define)* | [`etapa-2-personas-cenarios/`](etapa-2-personas-cenarios/) | Personas (Ana, Rafael, Caio), PACT e cenários com claims e tarefas T1–T5 (.docx) | Concluída em 07/11 com os dados da Etapa 1 |
-| **3. Prototipação** *(Desenhar)* | [`etapa-3-prototipo/`](etapa-3-prototipo/) | O app em `apps/` é o protótipo de alta fidelidade; tokens de cor já validados | Em andamento: faltam esboços de baixa fidelidade, `decisoes-de-design.md` e implementar as decisões D1–D6 (chat, botão analogia ↔ técnica, troca de universo, texto livre restrito ao conceito, autoverificação da IA) |
-| **4. Avaliação** *(Avaliar)* | [`etapa-4-avaliacao/`](etapa-4-avaliacao/) | Protocolo do teste, SUS validado, avaliação heurística, auditoria WCAG | Instrumentos prontos; revisar para a interface de chat e executar |
+| **3. Prototipação** *(Desenhar)* | [`etapa-3-prototipo/`](etapa-3-prototipo/) | O app em `apps/` é o protótipo de alta fidelidade; tokens de cor já validados | Concluída: esboços de baixa fidelidade, `decisoes-de-design.md` (DD01–DD39) e o app com as decisões D1–D9 |
+| **4. Avaliação** *(Avaliar)* | [`etapa-4-avaliacao/`](etapa-4-avaliacao/) | Avaliação heurística, percurso cognitivo, auditoria WCAG, evidências, resultados e melhorias; protocolo do teste e SUS validado | Avaliação analítica concluída em 09/11 (heurística, percurso cognitivo, auditoria WCAG; `resultados.md`, `melhorias.md`). Teste com usuários e SUS: instrumentos prontos, não aplicados |
 
 ## Transversal — não pertence a uma etapa só
 
