@@ -202,7 +202,6 @@ test("D8 — assunto pesquisado na web mostra as fontes antes de explicar", asyn
   await expect(page.getByText(/Combinado, vamos estudar Árvore B/)).toBeVisible();
   await semViolacoes(page);
   await semRolagemHorizontal(page);
-  await page.screenshot({ path: `/home/claude/check/shots/${test.info().project.name}-5-pesquisa.png` });
 });
 
 test("D8 — pesquisa que falha vira mensagem clara, sem detalhe técnico", async ({ page }) => {
